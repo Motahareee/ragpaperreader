@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Building PaperChat: a private, local RAG chatbot for your research papers</title>
+<style>
+  :root {
+    --text: #1c1c1e;
+    --muted: #6b6b70;
+    --accent: #3b82f6;
+    --bg: #ffffff;
+    --code-bg: #f5f5f7;
+    --border: #e5e5ea;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    line-height: 1.65;
+  }
+  article {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 64px 24px 96px;
+  }
+  header.post-header {
+    margin-bottom: 40px;
+  }
+  .eyebrow {
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 12px;
+    color: var(--accent);
+    font-weight: 600;
+    margin-bottom: 12px;
+  }
+  h1 {
+    font-size: 34px;
+    line-height: 1.25;
+    margin: 0 0 12px;
+    letter-spacing: -0.01em;
+  }
+  .meta {
+    color: var(--muted);
+    font-size: 14px;
+  }
+  h2 {
+    font-size: 22px;
+    margin: 44px 0 14px;
+    letter-spacing: -0.01em;
+  }
+  h3 {
+    font-size: 17px;
+    margin: 28px 0 10px;
+  }
+  p {
+    font-size: 17px;
+    margin: 0 0 18px;
+  }
+  ul, ol {
+    font-size: 17px;
+    margin: 0 0 18px;
+    padding-left: 22px;
+  }
+  li { margin-bottom: 8px; }
+  code {
+    background: var(--code-bg);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.88em;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 18px;
+    overflow-x: auto;
+    font-size: 13.5px;
+    line-height: 1.55;
+  }
+  pre code { background: none; padding: 0; }
+  blockquote {
+    margin: 24px 0;
+    padding: 4px 20px;
+    border-left: 3px solid var(--accent);
+    color: var(--muted);
+    font-size: 16px;
+  }
+  .callout {
+    background: #fef9e7;
+    border: 1px solid #f5e6a8;
+    border-radius: 10px;
+    padding: 16px 20px;
+    font-size: 15.5px;
+    margin: 24px 0;
+  }
+  .callout strong { color: #7a5c00; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14.5px;
+    margin: 20px 0;
+  }
+  th, td {
+    text-align: left;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  th { color: var(--muted); font-weight: 600; }
+  hr {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 48px 0;
+  }
+  .tag {
+    display: inline-block;
+    font-size: 12px;
+    background: #eef2ff;
+    color: #3b3bd6;
+    border-radius: 10px;
+    padding: 2px 10px;
+    margin: 0 6px 6px 0;
+  }
+  footer.post-footer {
+    margin-top: 56px;
+    color: var(--muted);
+    font-size: 14px;
+  }
+</style>
+</head>
+<body>
+<article>
+  <header class="post-header">
+    <div class="eyebrow">Project log</div>
+    <h1>Building PaperChat: a private, local RAG chatbot for your research papers</h1>
+    <div class="meta">A weekend-scoped project to answer one question: can I ask my own laptop about a folder of PDFs, without a single byte leaving the machine?</div>
+    <div style="margin-top:16px;">
+      <span class="tag">RAG</span>
+      <span class="tag">local LLM</span>
+      <span class="tag">privacy</span>
+      <span class="tag">macOS</span>
+    </div>
+  </header>
+
+  <p>I wanted something simple: drop a folder of research papers on my desk, double-click one file, and ask it questions — <em>"what optimizer did they use," "how does this compare to the baseline," "which section talks about limitations."</em> No uploading PDFs to a website, no account, no wondering where my unpublished drafts end up. Just a chatbot that reads the folder it's sitting in.</p>
+
+  <p>That's the whole idea behind <strong>PaperChat</strong>. This post is the log of actually building it — what exists already, what was missing, and the decisions that shaped the design.</p>
+
+  <h2>Does this already exist?</h2>
+  <p>Mostly, yes. Tools like <strong>AnythingLLM</strong>, <strong>GPT4All</strong>'s LocalDocs, <strong>PrivateGPT</strong>, and <strong>Kotaemon</strong> already do local, private, folder-based RAG chat. Before writing a line of code, it was worth checking whether any of them just... solved this.</p>
+  <p>None of them quite fit the exact shape I wanted, for three concrete reasons:</p>
+  <ol>
+    <li><strong>No true zero-install distribution.</strong> Every one of them wants Docker, a multi-step installer, a Python environment, or a separate Ollama process running alongside. None is "one file, drop it anywhere, done."</li>
+    <li><strong>Weak handling of academic PDFs.</strong> Multi-column layouts, equations, and reference lists trip most of them up — GPT4All's own docs suggest running a separate cleanup tool before ingestion.</li>
+    <li><strong>Inconsistent citations.</strong> Some tools cite a filename; a couple (Kotaemon, notably) highlight the retrieved passage in a PDF viewer, which is exactly the experience I wanted, but bundled with everything else I didn't.</li>
+  </ol>
+  <p>So: a genuinely portable, zero-setup app that parses academic PDFs reasonably well and highlights the exact passage it's citing, directly in the document. Narrow enough to actually build.</p>
+
+  <h2>The shape of the thing</h2>
+  <p>Everything runs in one process, in one language, with no server the user ever has to think about:</p>
+  <ul>
+    <li><strong>PDF parsing</strong> — PyMuPDF pulls out text blocks with page number and exact bounding box. A column-detection heuristic sorts blocks so two-column academic layout reads top-to-bottom, left-column-then-right-column, instead of zig-zagging across the page.</li>
+    <li><strong>Embeddings</strong> — a small GGUF embedding model, bundled directly inside the app. Running it through <code>llama.cpp</code> instead of the more common sentence-transformers/torch stack means no multi-gigabyte torch dependency to fight with during packaging.</li>
+    <li><strong>Vector store</strong> — no database at all. Just a numpy array and a metadata file, living in a quiet <code>.ragindex/</code> folder next to the papers. Brute-force cosine similarity is plenty for a folder of PDFs, and it means one less thing to install or corrupt.</li>
+    <li><strong>The answering model</strong> — a mid-size instruct model (Qwen2.5-7B), downloaded once on first launch and cached forever after. This was the one deliberate compromise on "fully offline": the <em>very first</em> run needs internet to fetch generic model weights. Your papers and every question you ever ask never leave the machine, on that run or any other.</li>
+    <li><strong>The highlight</strong> — when the model answers, it cites numbered excerpts. Click one, and the PDF panel (rendered with <code>pdf.js</code>, the same engine Chrome and Firefox use) jumps to the page and draws a highlight box over the exact retrieved passage.</li>
+  </ul>
+
+  <div class="callout">
+    <strong>Why auto-download the LLM instead of bundling it?</strong> A fully bundled small model (~3B params) would mean zero internet, ever — appealing, but the answer quality for synthesizing across multiple papers was noticeably weaker. Since the download only ever touches generic model weights, never your documents, the one-time setup cost felt worth trading for materially better reasoning.
+  </div>
+
+  <h2>The Mac-specific wrinkle nobody warns you about</h2>
+  <p>The plan was "package it as one file, drop it in a folder, double-click it." Turns out that on macOS, double-clicking an app from Finder does <em>not</em> set its working directory to the folder it's sitting in — Finder launches it from somewhere else entirely. If I hadn't caught this, the app would have opened, looked fine, and quietly indexed the wrong folder every single time.</p>
+  <p>The fix: instead of trusting the working directory, the app looks up its own <code>.app</code> bundle's location on disk and treats <em>that</em> folder as the one to index. It's a small detail, but it's the difference between "drop it in a folder and it works" and "drop it in a folder and it mysteriously doesn't."</p>
+
+  <h2>Testing a RAG pipeline is its own small puzzle</h2>
+  <p>The deterministic parts — PDF parsing, chunking, the vector store — get a normal pytest suite: synthetic fixture PDFs, known inputs, exact expected outputs. Nothing unusual there.</p>
+  <p>The interesting part is testing <em>retrieval quality</em>, which isn't a pass/fail thing in the usual sense. The approach that worked: build a small golden set of real questions against a real paper, verify by hand that the answer to each one genuinely lives on a specific page, then assert the retrieval step actually surfaces that page in its top results. It's a regression baseline, not a claim of objective correctness — but it catches exactly the failure mode that matters: "the right passage stopped showing up after that refactor."</p>
+  <p>That process was also honest about the small embedding model's ceiling — a few plausible test questions simply didn't retrieve the right page, and got dropped from the golden set rather than papered over. Worth knowing going in: a tiny, fast, CPU-friendly embedding model trades away some retrieval precision, and that's a real, visible limitation, not just a theoretical one.</p>
+
+  <h2>Where it stands</h2>
+  <p>The core pipeline — parse, chunk, embed, retrieve, answer, cite, highlight — is built and passes an end-to-end test against a real 15-page paper, with the model correctly answering a question and citing the exact right passage. The pytest suite covers the deterministic logic plus a retrieval-quality regression check.</p>
+  <p>What's still ahead: building and running the actual packaged <code>.app</code> on real macOS hardware (the tricky bits so far were all verified against the underlying logic, not the finished GUI), and eventually a Windows/Linux build once the Mac version is solid.</p>
+
+  <hr />
+  <p style="color:var(--muted); font-size:15px;">If you're building something similar: the biggest lesson so far isn't about RAG at all — it's that "just drop a file in a folder and run it" turns out to hide several small, very specific platform assumptions (working directories, Gatekeeper, packaging heavy ML dependencies) that are easy to miss until you actually try to ship it.</p>
+
+  <footer class="post-footer">
+    Posted from a project log — more updates as the Mac build gets tested for real.
+  </footer>
+</article>
+</body>
+</html>

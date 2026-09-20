@@ -1,0 +1,38 @@
+{
+  "description": "Retrieval regression baseline for test_papers/attention.pdf (Vaswani et al., 'Attention Is All You Need'). Each expected_page is 0-indexed and was verified by hand: the question's answer is actually present in a chunk on that page. This tests retrieval recall, not answer correctness -- it will catch 'the right passage stopped showing up' regressions in chunking/embedding.",
+  "source_pdf": "attention.pdf",
+  "cases": [
+    {
+      "question": "What mechanism does the Transformer use instead of recurrence or convolution?",
+      "expected_page": 1
+    },
+    {
+      "question": "What is the computational complexity of self-attention compared to recurrent layers?",
+      "expected_page": 5
+    },
+    {
+      "question": "How many GPUs were used to train the model?",
+      "expected_page": 6
+    },
+    {
+      "question": "What happens to model quality when the attention key size is reduced?",
+      "expected_page": 8
+    },
+    {
+      "question": "How is positional information added to the input embeddings?",
+      "expected_page": 5
+    },
+    {
+      "question": "How does multi-head attention work?",
+      "expected_page": 4
+    },
+    {
+      "question": "What optimizer and learning rate schedule was used for training?",
+      "expected_page": 6
+    },
+    {
+      "question": "What BLEU score did the big Transformer model achieve on English to German translation?",
+      "expected_page": 7
+    }
+  ]
+}
