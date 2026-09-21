@@ -1,0 +1,52 @@
+name: Build macOS app
+
+on:
+  workflow_dispatch: {}
+  push:
+    branches: [main]
+    paths:
+      - "paperchat/**"
+      - "build/**"
+      - "requirements.txt"
+      - "run_paperchat.py"
+      - "scripts/**"
+      - ".github/workflows/build-mac.yml"
+
+jobs:
+  build:
+    runs-on: macos-14 # Apple Silicon runner
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        env:
+          # Skip llama.cpp's bundled CLI tools -- we only need the Python
+          # bindings, and building the tools is what fails on some toolchains.
+          CMAKE_ARGS: "-DLLAMA_BUILD_TOOLS=OFF -DLLAMA_BUILD_EXAMPLES=OFF -DLLAMA_BUILD_TESTS=OFF"
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r build/requirements-build.txt
+
+      - name: Fetch bundled embedding model
+        run: python scripts/fetch_embed_model.py
+
+      - name: Build PaperChat.app
+        run: |
+          rm -rf build/build build/dist
+          pyinstaller --distpath build/dist --workpath build/build build/paperchat.spec
+
+      - name: Zip app for upload
+        run: |
+          cd build/dist
+          zip -r PaperChat-mac.zip PaperChat.app
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PaperChat-mac
+          path: build/dist/PaperChat-mac.zip
+          retention-days: 30
