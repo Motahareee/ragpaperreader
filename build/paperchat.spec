@@ -6,7 +6,7 @@ block_cipher = None
 repo_root = Path(SPECPATH).resolve().parent
 
 a = Analysis(
-    ["run_paperchat.py"],
+    [str(repo_root / "run_paperchat.py")],
     pathex=[str(repo_root)],
     binaries=[],
     datas=[
