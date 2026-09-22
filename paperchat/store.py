@@ -89,13 +89,27 @@ class Store:
     def save(self):
         self._save()
 
-    def search(self, query_vector: np.ndarray, top_k: int = 5) -> list[dict]:
+    def search(
+        self, query_vector: np.ndarray, top_k: int = 5, doc_path: str | None = None
+    ) -> list[dict]:
+        """Cosine-similarity search, optionally restricted to a single document.
+
+        The doc_path filter exists for the related-work generator, which needs
+        guaranteed coverage of every selected paper -- a single global top-k
+        search could easily return zero chunks for a paper that's simply less
+        similar to the topic than the others.
+        """
         if self.embeddings.shape[0] == 0:
             return []
         scores = self.embeddings @ query_vector
+        if doc_path is not None:
+            mask = np.array([m["doc_path"] == doc_path for m in self.metadata])
+            scores = np.where(mask, scores, -np.inf)
         top_idx = np.argsort(-scores)[:top_k]
         results = []
         for i in top_idx:
+            if scores[i] == -np.inf:
+                continue
             item = dict(self.metadata[i])
             item["score"] = float(scores[i])
             results.append(item)

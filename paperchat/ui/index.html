@@ -24,6 +24,21 @@
       <div class="section-label">Papers</div>
       <ul id="paper-list"></ul>
 
+      <details id="compose-panel">
+        <summary>Write a related-work section</summary>
+        <div id="compose-body">
+          <input
+            id="compose-topic"
+            type="text"
+            placeholder="Topic, e.g. 'efficient attention mechanisms'"
+            autocomplete="off"
+          />
+          <button id="compose-generate" type="button" disabled>
+            Generate from <span id="compose-count">0</span> selected paper(s)
+          </button>
+        </div>
+      </details>
+
       <div id="chat-log">
         <div id="empty-state">
           Ask a question about these papers to get started.

@@ -28,6 +28,29 @@ def test_search_returns_nearest_by_cosine_similarity(tmp_path):
     assert results[0]["chunk_index"] == 0
 
 
+def test_search_can_be_restricted_to_one_document(tmp_path):
+    store = Store(tmp_path)
+    store.add_chunks(
+        [_chunk("a.pdf", 0), _chunk("b.pdf", 0), _chunk("a.pdf", 1)],
+        np.array([[1.0, 0.0], [0.9, 0.1], [0.0, 1.0]], dtype=np.float32),
+    )
+    # query closest to b.pdf's vector, but restricted to a.pdf
+    results = store.search(np.array([0.9, 0.1], dtype=np.float32), top_k=5, doc_path="a.pdf")
+    assert all(r["doc_path"] == "a.pdf" for r in results)
+    assert len(results) == 2
+
+
+def test_search_with_doc_filter_returns_fewer_than_top_k_if_document_is_small(tmp_path):
+    store = Store(tmp_path)
+    store.add_chunks(
+        [_chunk("a.pdf", 0), _chunk("b.pdf", 0), _chunk("b.pdf", 1)],
+        np.array([[1.0, 0.0], [0.0, 1.0], [0.0, 0.9]], dtype=np.float32),
+    )
+    results = store.search(np.array([1.0, 0.0], dtype=np.float32), top_k=5, doc_path="a.pdf")
+    assert len(results) == 1
+    assert results[0]["doc_path"] == "a.pdf"
+
+
 def test_remove_document_drops_only_its_chunks(tmp_path):
     store = Store(tmp_path)
     store.add_chunks(

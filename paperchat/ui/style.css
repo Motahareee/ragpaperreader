@@ -138,10 +138,16 @@ body {
 }
 #paper-list li:hover { background: var(--bg-sunken); }
 #paper-list li svg { flex: none; color: var(--text-faint); }
+#paper-list li input[type="checkbox"] {
+  flex: none;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
 #paper-list .paper-name {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  cursor: pointer;
 }
 #paper-list:empty::before {
   content: "No PDFs found in this folder yet.";
@@ -150,6 +156,59 @@ body {
   padding: 4px 2px;
   display: block;
 }
+
+/* ---------- Compose (related-work generator) ---------- */
+
+#compose-panel {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  margin: 10px 0 4px;
+  background: var(--bg-panel);
+}
+#compose-panel summary {
+  padding: 9px 12px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  list-style: none;
+}
+#compose-panel summary::-webkit-details-marker { display: none; }
+#compose-panel summary::before {
+  content: "\25B8";
+  display: inline-block;
+  margin-right: 6px;
+  transition: transform 0.12s ease;
+  color: var(--text-faint);
+}
+#compose-panel[open] summary::before { transform: rotate(90deg); }
+#compose-body {
+  padding: 0 12px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+#compose-topic {
+  font: inherit;
+  font-size: 13px;
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  outline: none;
+}
+#compose-topic:focus { border-color: var(--accent); }
+#compose-generate {
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 7px 10px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--accent);
+  color: white;
+  cursor: pointer;
+}
+#compose-generate:disabled { opacity: 0.4; cursor: not-allowed; }
 
 /* ---------- Chat ---------- */
 

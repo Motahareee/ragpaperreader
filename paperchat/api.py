@@ -87,6 +87,48 @@ class Api:
             full_text += token
             self._push("onToken", token)
         self._push("onDone")
+        full_text = llm.clean_out_of_range_citations(full_text, len(chunks))
+
+        citations = [
+            {
+                "index": i + 1,
+                "doc_path": c["doc_path"],
+                "doc_name": Path(c["doc_path"]).name,
+                "page": c["page"],
+                "page_width": c["page_width"],
+                "page_height": c["page_height"],
+                "bboxes": c["bboxes"],
+            }
+            for i, c in enumerate(chunks)
+        ]
+        return {"answer": full_text, "citations": citations}
+
+    def generate_related_work(self, topic: str, paper_paths: list[str]) -> dict:
+        if not self.ready:
+            return {"error": "Still starting up, please wait."}
+        if not topic.strip():
+            return {"error": "Enter a topic first."}
+        if not paper_paths:
+            return {"error": "Select at least one paper."}
+
+        # Retrieve per-paper (not one global top-k) so every selected paper is
+        # guaranteed some representation, and cap the total so the prompt stays
+        # comfortably inside the model's context window regardless of how many
+        # papers are selected.
+        TOTAL_CHUNK_BUDGET = 20
+        chunks_per_paper = max(1, min(4, TOTAL_CHUNK_BUDGET // len(paper_paths)))
+
+        query_vec = self.embedder.embed_one(topic)
+        chunks = []
+        for path in paper_paths:
+            chunks.extend(self.store.search(query_vec, top_k=chunks_per_paper, doc_path=path))
+
+        full_text = ""
+        for token in self.engine.write_related_work(topic, chunks):
+            full_text += token
+            self._push("onToken", token)
+        self._push("onDone")
+        full_text = llm.clean_out_of_range_citations(full_text, len(chunks))
 
         citations = [
             {

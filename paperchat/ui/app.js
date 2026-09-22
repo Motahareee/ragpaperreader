@@ -13,6 +13,10 @@ const chatForm = document.getElementById("chat-form");
 const chatInput = document.getElementById("chat-input");
 const chatSend = document.getElementById("chat-send");
 
+const composeTopic = document.getElementById("compose-topic");
+const composeGenerate = document.getElementById("compose-generate");
+const composeCount = document.getElementById("compose-count");
+
 const viewerTitle = document.getElementById("viewer-title");
 const pageIndicator = document.getElementById("page-indicator");
 const prevPageBtn = document.getElementById("prev-page");
@@ -35,6 +39,8 @@ let currentAssistantText = "";
 let currentTypingRow = null;
 let pdfCache = new Map(); // doc_path -> pdfjs document proxy
 let viewerState = { docPath: null, pageNum: null, bboxes: null, pageWidth: null, pageHeight: null };
+let selectedPapers = new Set(); // paths checked in the paper list, for compose
+let busy = false; // true while a chat question or compose request is in flight
 
 // ---------- tiny markdown + inline-citation renderer ----------
 
@@ -240,14 +246,21 @@ chatInput.addEventListener("keydown", (e) => {
   }
 });
 
+function setBusy(state) {
+  busy = state;
+  chatInput.disabled = state;
+  chatSend.disabled = state;
+  updateComposeButtonState();
+}
+
 chatForm.addEventListener("submit", async (e) => {
   e.preventDefault();
+  if (busy) return;
   const question = chatInput.value.trim();
   if (!question) return;
   chatInput.value = "";
   autoResizeInput();
-  chatInput.disabled = true;
-  chatSend.disabled = true;
+  setBusy(true);
 
   addUserMessage(question);
   beginAssistantMessage();
@@ -260,9 +273,39 @@ chatForm.addEventListener("submit", async (e) => {
     currentAssistantBody.innerHTML = `<p>Error: ${escapeHtml(String(err))}</p>`;
     currentAssistantBody.classList.add("error");
   } finally {
-    chatInput.disabled = false;
-    chatSend.disabled = false;
+    setBusy(false);
     chatInput.focus();
+  }
+});
+
+// ---------- compose: related-work generator ----------
+
+function updateComposeButtonState() {
+  composeCount.textContent = selectedPapers.size;
+  composeGenerate.disabled = busy || selectedPapers.size === 0 || !composeTopic.value.trim();
+}
+composeTopic.addEventListener("input", updateComposeButtonState);
+
+composeGenerate.addEventListener("click", async () => {
+  if (busy) return;
+  const topic = composeTopic.value.trim();
+  const paths = Array.from(selectedPapers);
+  if (!topic || paths.length === 0) return;
+  setBusy(true);
+
+  const names = paths.map((p) => p.split("/").pop()).join(", ");
+  addUserMessage(`Write a related-work section on "${topic}" using: ${names}`);
+  beginAssistantMessage();
+
+  try {
+    const result = await window.pywebview.api.generate_related_work(topic, paths);
+    finalizeAssistantMessage(result, result.citations || []);
+  } catch (err) {
+    ensureAssistantBodyVisible();
+    currentAssistantBody.innerHTML = `<p>Error: ${escapeHtml(String(err))}</p>`;
+    currentAssistantBody.classList.add("error");
+  } finally {
+    setBusy(false);
   }
 });
 
@@ -289,12 +332,20 @@ window.onReady = (papers) => {
   papers.forEach(({ name, path }) => {
     const li = document.createElement("li");
     li.innerHTML = `
+      <input type="checkbox" aria-label="Select ${escapeHtml(name)} for related-work generation" />
       <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8">
         <path d="M6 2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"></path>
         <path d="M15 2v5h5"></path>
       </svg>
       <span class="paper-name">${escapeHtml(name)}</span>
     `;
+    const checkbox = li.querySelector("input");
+    checkbox.addEventListener("click", (e) => e.stopPropagation());
+    checkbox.addEventListener("change", () => {
+      if (checkbox.checked) selectedPapers.add(path);
+      else selectedPapers.delete(path);
+      updateComposeButtonState();
+    });
     li.addEventListener("click", () => openPaperByPath(path));
     paperListEl.appendChild(li);
   });
