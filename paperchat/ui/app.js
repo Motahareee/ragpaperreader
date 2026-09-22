@@ -3,10 +3,12 @@ import * as pdfjsLib from "./vendor/pdf.min.mjs";
 pdfjsLib.GlobalWorkerOptions.workerSrc = "./vendor/pdf.worker.min.mjs";
 
 const statusEl = document.getElementById("status");
+const statusSpinner = document.getElementById("status-spinner");
 const progressWrap = document.getElementById("progress-wrap");
 const progressFill = document.getElementById("progress-fill");
 const paperListEl = document.getElementById("paper-list");
 const chatLog = document.getElementById("chat-log");
+const emptyState = document.getElementById("empty-state");
 const chatForm = document.getElementById("chat-form");
 const chatInput = document.getElementById("chat-input");
 const chatSend = document.getElementById("chat-send");
@@ -15,38 +17,133 @@ const viewerTitle = document.getElementById("viewer-title");
 const pageIndicator = document.getElementById("page-indicator");
 const prevPageBtn = document.getElementById("prev-page");
 const nextPageBtn = document.getElementById("next-page");
+const zoomInBtn = document.getElementById("zoom-in");
+const zoomOutBtn = document.getElementById("zoom-out");
+const zoomIndicator = document.getElementById("zoom-indicator");
 const canvas = document.getElementById("pdf-canvas");
 const ctx = canvas.getContext("2d");
 const highlightLayer = document.getElementById("highlight-layer");
+const pageContainer = document.getElementById("page-container");
+const viewerEmpty = document.getElementById("viewer-empty");
 
-const RENDER_SCALE = 1.5;
+let currentScale = 1.5;
+const MIN_SCALE = 0.6;
+const MAX_SCALE = 3.0;
 
-let currentAssistantBubble = null;
+let currentAssistantBody = null;
+let currentAssistantText = "";
+let currentTypingRow = null;
 let pdfCache = new Map(); // doc_path -> pdfjs document proxy
-let viewerState = { docPath: null, pageNum: null };
+let viewerState = { docPath: null, pageNum: null, bboxes: null, pageWidth: null, pageHeight: null };
 
-function addMessage(role, text) {
-  const div = document.createElement("div");
-  div.className = `msg ${role}`;
-  div.textContent = text;
-  chatLog.appendChild(div);
-  chatLog.scrollTop = chatLog.scrollHeight;
-  return div;
+// ---------- tiny markdown + inline-citation renderer ----------
+
+function escapeHtml(s) {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
 }
 
-function renderCitations(container, citations) {
-  if (!citations || !citations.length) return;
-  const wrap = document.createElement("div");
-  wrap.className = "citations";
-  citations.forEach((c) => {
-    const chip = document.createElement("span");
-    chip.className = "citation-chip";
-    chip.textContent = `[${c.index}] ${c.doc_name} p.${c.page + 1}`;
-    chip.addEventListener("click", () => openCitation(c));
-    wrap.appendChild(chip);
+function renderAnswerHtml(text) {
+  let html = escapeHtml(text);
+
+  // inline citation markers like [1] or [1, 4] -> clickable badges
+  html = html.replace(/\[(\d+(?:\s*,\s*\d+)*)\]/g, (_, nums) => {
+    return nums
+      .split(",")
+      .map((n) => `<span class="cite-badge" data-cite="${n.trim()}">${n.trim()}</span>`)
+      .join("");
   });
-  container.appendChild(wrap);
+
+  // bold / inline code
+  html = html.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+  html = html.replace(/`([^`]+)`/g, "<code>$1</code>");
+
+  // paragraphs (blank-line separated); single newlines become <br>
+  const paragraphs = html.split(/\n{2,}/).map((p) => p.replace(/\n/g, "<br>"));
+  return paragraphs.map((p) => `<p>${p}</p>`).join("");
 }
+
+// ---------- chat rendering ----------
+
+function hideEmptyState() {
+  if (emptyState) emptyState.remove();
+}
+
+function addUserMessage(text) {
+  hideEmptyState();
+  const row = document.createElement("div");
+  row.className = "msg-row user";
+  row.innerHTML = `
+    <div class="avatar user">You</div>
+    <div class="msg-body">${escapeHtml(text)}</div>
+  `;
+  chatLog.appendChild(row);
+  chatLog.scrollTop = chatLog.scrollHeight;
+  return row;
+}
+
+function addTypingIndicator() {
+  const row = document.createElement("div");
+  row.className = "msg-row assistant";
+  row.innerHTML = `
+    <div class="avatar assistant">P</div>
+    <div class="msg-body">
+      <div class="typing-dots"><span></span><span></span><span></span></div>
+    </div>
+  `;
+  chatLog.appendChild(row);
+  chatLog.scrollTop = chatLog.scrollHeight;
+  return row;
+}
+
+function beginAssistantMessage() {
+  currentTypingRow = addTypingIndicator();
+  currentAssistantBody = null;
+  currentAssistantText = "";
+}
+
+function ensureAssistantBodyVisible() {
+  if (currentAssistantBody) return;
+  // swap the typing indicator's body content the first time real text arrives
+  currentAssistantBody = currentTypingRow.querySelector(".msg-body");
+  currentAssistantBody.innerHTML = "";
+}
+
+function appendAssistantToken(token) {
+  ensureAssistantBodyVisible();
+  currentAssistantText += token;
+  currentAssistantBody.innerHTML = renderAnswerHtml(currentAssistantText);
+  chatLog.scrollTop = chatLog.scrollHeight;
+}
+
+function finalizeAssistantMessage(result, citations) {
+  ensureAssistantBodyVisible();
+  if (result.error) {
+    currentAssistantBody.innerHTML = `<p>Error: ${escapeHtml(result.error)}</p>`;
+    currentAssistantBody.classList.add("error");
+    return;
+  }
+  currentAssistantText = result.answer;
+  currentAssistantBody.innerHTML = renderAnswerHtml(currentAssistantText);
+  currentTypingRow._citations = citations;
+  chatLog.scrollTop = chatLog.scrollHeight;
+}
+
+// clicking an inline citation badge -> open + highlight that passage
+chatLog.addEventListener("click", (e) => {
+  const badge = e.target.closest(".cite-badge");
+  if (!badge) return;
+  const row = badge.closest(".msg-row");
+  const citations = row && row._citations;
+  if (!citations) return;
+  const idx = Number(badge.dataset.cite);
+  const citation = citations.find((c) => c.index === idx);
+  if (citation) openCitation(citation);
+});
+
+// ---------- PDF viewer ----------
 
 async function getPdfDoc(docPath) {
   if (pdfCache.has(docPath)) return pdfCache.get(docPath);
@@ -58,9 +155,12 @@ async function getPdfDoc(docPath) {
 }
 
 async function renderPage(docPath, pageNum, bboxes, pageWidth, pageHeight) {
+  viewerEmpty.classList.add("hidden");
+  pageContainer.classList.remove("hidden");
+
   const doc = await getPdfDoc(docPath);
   const page = await doc.getPage(pageNum + 1); // pdf.js pages are 1-indexed
-  const viewport = page.getViewport({ scale: RENDER_SCALE });
+  const viewport = page.getViewport({ scale: currentScale });
 
   canvas.width = viewport.width;
   canvas.height = viewport.height;
@@ -85,9 +185,16 @@ async function renderPage(docPath, pageNum, bboxes, pageWidth, pageHeight) {
     highlightLayer.firstChild.scrollIntoView({ block: "center", behavior: "smooth" });
   }
 
-  viewerState = { docPath, pageNum, numPages: doc.numPages };
+  viewerState = { docPath, pageNum, bboxes, pageWidth, pageHeight, numPages: doc.numPages };
   viewerTitle.textContent = docPath.split("/").pop();
-  pageIndicator.textContent = `page ${pageNum + 1} / ${doc.numPages}`;
+  viewerTitle.title = docPath.split("/").pop();
+  pageIndicator.textContent = `${pageNum + 1} / ${doc.numPages}`;
+  zoomIndicator.textContent = `${Math.round((currentScale / 1.5) * 100)}%`;
+
+  zoomInBtn.disabled = currentScale >= MAX_SCALE;
+  zoomOutBtn.disabled = currentScale <= MIN_SCALE;
+  prevPageBtn.disabled = pageNum <= 0;
+  nextPageBtn.disabled = pageNum + 1 >= doc.numPages;
 }
 
 async function openCitation(c) {
@@ -108,28 +215,50 @@ nextPageBtn.addEventListener("click", async () => {
   if (viewerState.pageNum + 1 >= doc.numPages) return;
   await renderPage(viewerState.docPath, viewerState.pageNum + 1, null, null, null);
 });
+zoomInBtn.addEventListener("click", async () => {
+  if (!viewerState.docPath || currentScale >= MAX_SCALE) return;
+  currentScale = Math.min(MAX_SCALE, currentScale + 0.25);
+  await renderPage(viewerState.docPath, viewerState.pageNum, viewerState.bboxes, viewerState.pageWidth, viewerState.pageHeight);
+});
+zoomOutBtn.addEventListener("click", async () => {
+  if (!viewerState.docPath || currentScale <= MIN_SCALE) return;
+  currentScale = Math.max(MIN_SCALE, currentScale - 0.25);
+  await renderPage(viewerState.docPath, viewerState.pageNum, viewerState.bboxes, viewerState.pageWidth, viewerState.pageHeight);
+});
+
+// ---------- chat input (auto-resize + enter-to-send) ----------
+
+function autoResizeInput() {
+  chatInput.style.height = "auto";
+  chatInput.style.height = `${Math.min(chatInput.scrollHeight, 120)}px`;
+}
+chatInput.addEventListener("input", autoResizeInput);
+chatInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    chatForm.requestSubmit();
+  }
+});
 
 chatForm.addEventListener("submit", async (e) => {
   e.preventDefault();
   const question = chatInput.value.trim();
   if (!question) return;
   chatInput.value = "";
+  autoResizeInput();
   chatInput.disabled = true;
   chatSend.disabled = true;
 
-  addMessage("user", question);
-  currentAssistantBubble = addMessage("assistant", "");
+  addUserMessage(question);
+  beginAssistantMessage();
 
   try {
     const result = await window.pywebview.api.ask_question(question);
-    if (result.error) {
-      currentAssistantBubble.textContent = `Error: ${result.error}`;
-    } else {
-      currentAssistantBubble.textContent = result.answer;
-      renderCitations(currentAssistantBubble.parentElement, result.citations);
-    }
+    finalizeAssistantMessage(result, result.citations || []);
   } catch (err) {
-    currentAssistantBubble.textContent = `Error: ${err}`;
+    ensureAssistantBodyVisible();
+    currentAssistantBody.innerHTML = `<p>Error: ${escapeHtml(String(err))}</p>`;
+    currentAssistantBody.classList.add("error");
   } finally {
     chatInput.disabled = false;
     chatSend.disabled = false;
@@ -137,10 +266,11 @@ chatForm.addEventListener("submit", async (e) => {
   }
 });
 
-// --- Callbacks invoked by the Python backend via window.evaluate_js ---
+// ---------- Callbacks invoked by the Python backend via window.evaluate_js ----------
 
 window.onStatus = (msg) => {
   statusEl.textContent = msg;
+  statusSpinner.classList.remove("hidden");
 };
 
 window.onDownloadProgress = (pct) => {
@@ -150,6 +280,7 @@ window.onDownloadProgress = (pct) => {
 
 window.onReady = (papers) => {
   statusEl.textContent = "Ready";
+  statusSpinner.classList.add("hidden");
   progressWrap.classList.add("hidden");
   chatInput.disabled = false;
   chatSend.disabled = false;
@@ -157,7 +288,13 @@ window.onReady = (papers) => {
   paperListEl.innerHTML = "";
   papers.forEach(({ name, path }) => {
     const li = document.createElement("li");
-    li.textContent = name;
+    li.innerHTML = `
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8">
+        <path d="M6 2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"></path>
+        <path d="M15 2v5h5"></path>
+      </svg>
+      <span class="paper-name">${escapeHtml(name)}</span>
+    `;
     li.addEventListener("click", () => openPaperByPath(path));
     paperListEl.appendChild(li);
   });
@@ -165,13 +302,11 @@ window.onReady = (papers) => {
 
 window.onError = (msg) => {
   statusEl.textContent = `Error: ${msg}`;
+  statusSpinner.classList.add("hidden");
 };
 
 window.onToken = (token) => {
-  if (currentAssistantBubble) {
-    currentAssistantBubble.textContent += token;
-    chatLog.scrollTop = chatLog.scrollHeight;
-  }
+  appendAssistantToken(token);
 };
 
 window.onDone = () => {};

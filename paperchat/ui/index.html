@@ -8,20 +8,42 @@
 <body>
   <div id="app">
     <aside id="sidebar">
-      <h1>PaperChat</h1>
-      <div id="status">Starting up...</div>
+      <div id="brand">
+        <div id="brand-mark">P</div>
+        <div id="brand-name">PaperChat</div>
+      </div>
+
+      <div id="status-row">
+        <div id="status-spinner" class="spinner hidden"></div>
+        <div id="status">Starting up&hellip;</div>
+      </div>
       <div id="progress-wrap" class="hidden">
         <div id="progress-bar"><div id="progress-fill"></div></div>
       </div>
 
-      <h2>Papers</h2>
+      <div class="section-label">Papers</div>
       <ul id="paper-list"></ul>
 
-      <h2>Ask a question</h2>
-      <div id="chat-log"></div>
+      <div id="chat-log">
+        <div id="empty-state">
+          Ask a question about these papers to get started.
+        </div>
+      </div>
+
       <form id="chat-form">
-        <input id="chat-input" type="text" placeholder="Ask about these papers..." disabled autocomplete="off" />
-        <button id="chat-send" type="submit" disabled>Ask</button>
+        <textarea
+          id="chat-input"
+          rows="1"
+          placeholder="Ask about these papers..."
+          disabled
+          autocomplete="off"
+        ></textarea>
+        <button id="chat-send" type="submit" disabled aria-label="Send">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="19" x2="12" y2="5"></line>
+            <polyline points="5 12 12 5 19 12"></polyline>
+          </svg>
+        </button>
       </form>
     </aside>
 
@@ -29,12 +51,23 @@
       <div id="viewer-toolbar">
         <span id="viewer-title">No paper open</span>
         <div class="spacer"></div>
-        <button id="prev-page">&larr;</button>
+        <button id="zoom-out" class="icon-btn" aria-label="Zoom out" disabled>&minus;</button>
+        <span id="zoom-indicator">100%</span>
+        <button id="zoom-in" class="icon-btn" aria-label="Zoom in" disabled>+</button>
+        <span class="toolbar-divider"></span>
+        <button id="prev-page" class="icon-btn" aria-label="Previous page" disabled>&larr;</button>
         <span id="page-indicator"></span>
-        <button id="next-page">&rarr;</button>
+        <button id="next-page" class="icon-btn" aria-label="Next page" disabled>&rarr;</button>
       </div>
       <div id="canvas-wrap">
-        <div id="page-container">
+        <div id="viewer-empty">
+          <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M6 2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"></path>
+            <path d="M15 2v5h5"></path>
+          </svg>
+          <div>Select a paper or click a citation to view it here</div>
+        </div>
+        <div id="page-container" class="hidden">
           <canvas id="pdf-canvas"></canvas>
           <div id="highlight-layer"></div>
         </div>
