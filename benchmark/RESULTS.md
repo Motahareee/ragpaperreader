@@ -4,6 +4,16 @@ Hardware caveat: measured in an emulated Linux ARM64 sandbox, not the target App
 
 Corpus: 5 papers (`attention.pdf`, `adam.pdf`, `bert.pdf`, `resnet.pdf`, `dropout.pdf`), 226 chunks total, spanning Transformers, optimization, language pretraining, computer vision, and regularization -- chosen for topic diversity to surface cross-document confusion effects a single-topic corpus can't.
 
+## Interpreting these numbers
+
+50-60% recall@5 on the external Qasper sample reads as mediocre at face value, and that's worth stating plainly rather than spinning. Context that matters without erasing it as a real limitation:
+
+- **The small local encoder (MiniLM) is a deliberate tradeoff**, chosen to keep the app torch-free and packageable as a single portable executable -- not an oversight. A larger/cloud model would likely score higher, at the cost of the privacy/size properties this system is built around.
+- **Both accuracy sets are deliberately adversarial.** The hard set was built by hunting for failures; Qasper's questions were written by annotators who'd only read the abstract. A real user querying their own topically-coherent paper stack should see less cross-document confusion than either stress test induces.
+- **The hit metric is strict and binary** -- no credit for "right paper, adjacent chunk." Practical usefulness is likely somewhat better than the raw number implies.
+- **The system fails soft**: the prompt tells the model to say it lacks enough information rather than guess, so a retrieval miss usually surfaces as an honest non-answer, not a hallucination.
+- **The best-measured variant isn't shipped.** Every plain-cosine row below is the actual current app; hybrid retrieval outperforms it consistently across all three evaluations and exists only in this benchmark suite. The more urgent gap here isn't "can retrieval improve" -- it's "the improvement is already measured and not yet shipped."
+
 ## Accuracy
 
 Two separate sets, because the original golden set was curated to only include questions that already worked with cosine -- it can't show accuracy *differences* between methods.
