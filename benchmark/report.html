@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>PaperChat: A Local RAG System for Scientific Literature — Evaluation Report</title>
+<style>
+  :root {
+    --text: #1c1c1e;
+    --muted: #6b6b70;
+    --accent: #5b5bd6;
+    --border: #dcdce0;
+    --bg-soft: #f7f7f6;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: #ffffff;
+    color: var(--text);
+    font-family: "Georgia", "Times New Roman", serif;
+    line-height: 1.55;
+  }
+  article {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 56px 24px 90px;
+  }
+  h1 {
+    font-size: 26px;
+    line-height: 1.3;
+    margin: 0 0 6px;
+  }
+  .subtitle {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    color: var(--muted);
+    font-size: 14px;
+    margin-bottom: 28px;
+  }
+  h2 {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 16px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--accent);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 6px;
+    margin: 40px 0 16px;
+  }
+  h3 {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 14.5px;
+    font-weight: 700;
+    margin: 22px 0 8px;
+  }
+  p { font-size: 15.5px; margin: 0 0 14px; }
+  .abstract {
+    font-size: 14.5px;
+    background: var(--bg-soft);
+    border-left: 3px solid var(--accent);
+    padding: 14px 18px;
+    margin: 0 0 8px;
+  }
+  .abstract b {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--accent);
+    display: block;
+    margin-bottom: 6px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 13.5px;
+    margin: 10px 0 6px;
+  }
+  th, td {
+    text-align: left;
+    padding: 7px 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  th {
+    color: var(--muted);
+    font-weight: 600;
+    border-bottom: 1.5px solid var(--text);
+  }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  th.num { text-align: right; }
+  tr.highlight td { font-weight: 700; color: var(--accent); }
+  .figure {
+    margin: 18px 0 6px;
+    text-align: center;
+  }
+  .figure svg { max-width: 100%; height: auto; }
+  .caption {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 12.5px;
+    color: var(--muted);
+    text-align: left;
+    margin: 8px 0 0;
+  }
+  .caption b { color: var(--text); }
+  code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.85em;
+    background: var(--bg-soft);
+    padding: 1px 5px;
+    border-radius: 3px;
+  }
+  pre {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 12.5px;
+    background: var(--bg-soft);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 14px;
+    overflow-x: auto;
+  }
+  .callout {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 13.5px;
+    background: #fff8e8;
+    border: 1px solid #f0dfa8;
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin: 14px 0;
+  }
+  ul, ol { font-size: 15.5px; padding-left: 22px; margin: 0 0 14px; }
+  li { margin-bottom: 5px; }
+  footer {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 48px;
+    border-top: 1px solid var(--border);
+    padding-top: 14px;
+  }
+</style>
+</head>
+<body>
+<article>
+  <h1>PaperChat: A Fully Local RAG System for Scientific Literature — Design and Evaluation</h1>
+  <div class="subtitle">Systems evaluation report · accuracy, latency, memory, and scalability</div>
+
+  <div class="abstract">
+    <b>Summary</b>
+    PaperChat is a fully local, privacy-preserving retrieval-augmented generation (RAG) system for question-answering over a folder of PDF papers, packaged as a single portable application. This report evaluates three design choices empirically: (1) a lightweight bundled sentence encoder vs. a stronger alternative, (2) dense cosine retrieval vs. hybrid dense+sparse retrieval, and (3) a brute-force in-memory vector store vs. the assumption that a dedicated vector database is necessary at this scale. All measurements were taken on a 2-paper, 71-chunk test corpus.
+  </div>
+
+  <h2>1. System Design</h2>
+  <p>Everything runs in a single process with no external server or database: PDF parsing and chunking (PyMuPDF, with a column-aware heuristic for two-column academic layout), a bundled GGUF sentence encoder run through <code>llama.cpp</code>, a numpy-array vector store persisted as a JSON sidecar, and a local instruct LLM for answer generation with citations mapped back to exact page/bounding-box locations for passage highlighting in the source PDF.</p>
+
+  <div class="figure">
+    <svg viewBox="0 0 1080 560" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, Helvetica, Arial, sans-serif">
+      <defs>
+        <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="#5b5bd6" />
+        </marker>
+        <marker id="arrowGray" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="#9a9aa0" />
+        </marker>
+      </defs>
+
+      <!-- local machine boundary -->
+      <rect x="10" y="30" width="940" height="460" rx="10" fill="none" stroke="#c9c9ce" stroke-width="1.5" stroke-dasharray="6 5" />
+      <text x="26" y="20" font-size="13" font-weight="700" fill="#6b6b70">LOCAL MACHINE — fully offline after first run</text>
+
+      <!-- Row A: indexing -->
+      <g font-size="12.5" text-anchor="middle">
+        <rect x="30" y="60" width="180" height="58" rx="8" fill="#eeeefc" stroke="#5b5bd6"/>
+        <text x="120" y="84">Folder of PDFs</text>
+        <text x="120" y="100" fill="#6b6b70" font-size="11">(input)</text>
+
+        <rect x="260" y="60" width="180" height="58" rx="8" fill="#eeeefc" stroke="#5b5bd6"/>
+        <text x="350" y="84">Parse &amp; Chunk</text>
+        <text x="350" y="100" fill="#6b6b70" font-size="11">PyMuPDF, column-aware</text>
+
+        <rect x="490" y="60" width="180" height="58" rx="8" fill="#e8f0ff" stroke="#3b5bd6"/>
+        <text x="580" y="84">Encoder</text>
+        <text x="580" y="100" fill="#6b6b70" font-size="11">MiniLM GGUF · llama.cpp</text>
+
+        <rect x="720" y="60" width="180" height="58" rx="8" fill="#eeeefc" stroke="#5b5bd6"/>
+        <text x="810" y="84">Vector Store</text>
+        <text x="810" y="100" fill="#6b6b70" font-size="11">numpy array + JSON</text>
+      </g>
+      <path d="M210,89 H260" stroke="#5b5bd6" stroke-width="1.6" marker-end="url(#arrow)"/>
+      <path d="M440,89 H490" stroke="#5b5bd6" stroke-width="1.6" marker-end="url(#arrow)"/>
+      <path d="M670,89 H720" stroke="#5b5bd6" stroke-width="1.6" marker-end="url(#arrow)"/>
+
+      <!-- Row B: query -->
+      <g font-size="12.5" text-anchor="middle">
+        <rect x="30" y="230" width="180" height="58" rx="8" fill="#fdf3e3" stroke="#c9962f"/>
+        <text x="120" y="254">User Question</text>
+        <text x="120" y="270" fill="#6b6b70" font-size="11">typed in chat</text>
+
+        <rect x="720" y="230" width="180" height="58" rx="8" fill="#fdf3e3" stroke="#c9962f"/>
+        <text x="810" y="254">Top-k Chunks</text>
+        <text x="810" y="270" fill="#6b6b70" font-size="11">cosine (± BM25) search</text>
+      </g>
+      <!-- question -> encoder (elbow) -->
+      <path d="M120,230 V150 H580 V118" fill="none" stroke="#c9962f" stroke-width="1.6" marker-end="url(#arrow)"/>
+      <!-- vector store -> top-k chunks -->
+      <path d="M810,118 V230" stroke="#c9962f" stroke-width="1.6" marker-end="url(#arrow)"/>
+
+      <!-- Row C: generation + viewer -->
+      <g font-size="12.5" text-anchor="middle">
+        <rect x="720" y="400" width="180" height="58" rx="8" fill="#e8f0ff" stroke="#3b5bd6"/>
+        <text x="810" y="424">Local LLM</text>
+        <text x="810" y="440" fill="#6b6b70" font-size="11">Qwen2.5-7B-Instruct</text>
+
+        <rect x="490" y="400" width="180" height="58" rx="8" fill="#eeeefc" stroke="#5b5bd6"/>
+        <text x="580" y="424">Answer + Citations</text>
+        <text x="580" y="440" fill="#6b6b70" font-size="11">streamed, [n]-tagged</text>
+
+        <rect x="260" y="400" width="180" height="58" rx="8" fill="#eafaf0" stroke="#2f9e5c"/>
+        <text x="350" y="424">PDF Viewer</text>
+        <text x="350" y="440" fill="#6b6b70" font-size="11">pdf.js · bbox highlight</text>
+      </g>
+      <path d="M810,288 V400" stroke="#c9962f" stroke-width="1.6" marker-end="url(#arrow)"/>
+      <path d="M720,429 H670" stroke="#5b5bd6" stroke-width="1.6" marker-end="url(#arrow)"/>
+      <path d="M490,429 H440" stroke="#5b5bd6" stroke-width="1.6" marker-end="url(#arrow)"/>
+      <!-- feedback: viewer renders original pdf -->
+      <path d="M300,400 V118" fill="none" stroke="#9a9aa0" stroke-width="1.3" stroke-dasharray="4 4" marker-end="url(#arrowGray)"/>
+      <text x="230" y="260" font-size="10.5" fill="#6b6b70">click citation → open source page</text>
+
+      <!-- GUI grouping -->
+      <rect x="245" y="385" width="440" height="88" rx="10" fill="none" stroke="#2f9e5c" stroke-width="1.2" stroke-dasharray="3 4"/>
+      <text x="465" y="500" font-size="11" fill="#2f9e5c" text-anchor="middle" font-weight="700">GUI — pywebview, no HTTP server</text>
+
+      <!-- external: one-time model download -->
+      <rect x="740" y="10" width="0" height="0" />
+      <rect x="960" y="150" width="0" height="0"/>
+    </svg>
+    <p class="caption"><b>Figure 1.</b> PaperChat system architecture. Indexing (top row) and query-answering (bottom rows) share the encoder and vector store. No network call occurs except a one-time download of instruct-model weights on first launch (not shown); all indexing, retrieval, and answering happen entirely on-device thereafter.</p>
+  </div>
+
+  <h2>2. Evaluation Methodology</h2>
+  <p>Three retrieval variants were compared under an identical harness: <b>(a)</b> the shipped system — MiniLM-L6-v2 (GGUF, Q8_0) with cosine similarity; <b>(b)</b> an encoder swap to bge-small-en-v1.5 (GGUF, Q8_0), same retrieval logic; <b>(c)</b> a hybrid retrieval variant keeping MiniLM but fusing cosine and BM25 rankings via Reciprocal Rank Fusion (k=60).</p>
+  <p>Two accuracy sets were used. The first is a hand-verified golden set (n=8) built by confirming each answer's page by inspection — but because it was curated against the shipped system, it cannot show accuracy <i>differences</i> between variants (all three score 100% on it). A second, harder set (n=6) was constructed specifically to include cross-document, keyword-heavy questions verified to fail under plain cosine retrieval, to obtain a discriminating signal.</p>
+
+  <div class="callout"><b>Hardware caveat:</b> all measurements were taken on an emulated Linux ARM64 sandbox, not the target Apple Silicon deployment target (no Metal acceleration available). Relative comparisons between variants below are reliable; absolute latency numbers should be re-measured on target hardware before being cited as production figures.</div>
+
+  <h2>3. Results</h2>
+
+  <h3>3.1 Accuracy</h3>
+  <table>
+    <tr><th>Variant</th><th class="num">Golden set (n=8)</th><th class="num">Hard set (n=6)</th></tr>
+    <tr><td>MiniLM + cosine (shipped)</td><td class="num">100%</td><td class="num">67% (4/6)</td></tr>
+    <tr><td>bge-small + cosine</td><td class="num">100%</td><td class="num">67% (4/6, different miss)</td></tr>
+    <tr class="highlight"><td>MiniLM + hybrid (cosine + BM25)</td><td class="num">100%</td><td class="num">83% (5/6)</td></tr>
+  </table>
+  <p>Hybrid retrieval recovered a miss common to both pure-cosine variants — a keyword-heavy query ("What dataset was used for the English-to-German translation task?") — consistent with the known failure mode of dense embeddings under-weighting exact lexical matches that sparse retrieval catches directly.</p>
+
+  <h3>3.2 Latency</h3>
+  <table>
+    <tr><th>Stage</th><th class="num">MiniLM</th><th class="num">bge-small</th></tr>
+    <tr><td>Indexing throughput</td><td class="num">4.9–6.8 pages/s</td><td class="num">2.2–3.4 pages/s</td></tr>
+    <tr><td>Single-query embed</td><td class="num">4.8 ms</td><td class="num">203 ms</td></tr>
+    <tr><td>Search (numpy dot product)</td><td class="num">0.10 ms</td><td class="num">0.67 ms</td></tr>
+    <tr><td>Hybrid query (embed+BM25+fuse)</td><td class="num">15.5 ms</td><td class="num">—</td></tr>
+  </table>
+  <p>bge-small's single-query latency (~42×) is disproportionate to its batch-embedding slowdown (~2×, roughly matching its ~2× transformer-layer depth relative to MiniLM) — flagged as an open question likely tied to per-call overhead in this specific GGUF conversion, not a fundamental architectural cost.</p>
+
+  <h3>3.3 Memory</h3>
+  <table>
+    <tr><th>Checkpoint</th><th class="num">MiniLM</th><th class="num">bge-small</th></tr>
+    <tr><td>Model file size</td><td class="num">23.8 MB</td><td class="num">35.1 MB</td></tr>
+    <tr><td>Peak RSS after model load</td><td class="num">130.9 MB</td><td class="num">142.8 MB</td></tr>
+    <tr><td>Peak RSS after indexing (2 papers)</td><td class="num">193.3 MB</td><td class="num">205.1 MB</td></tr>
+  </table>
+  <p>Both are small relative to the ~4.7 GB instruct LLM, which dominates real-world memory footprint once loaded for generation.</p>
+
+  <h3>3.4 Scalability of Brute-Force Search</h3>
+  <table>
+    <tr><th class="num">n vectors</th><th class="num">mean latency</th><th class="num">p95 latency</th></tr>
+    <tr><td class="num">10</td><td class="num">0.003 ms</td><td class="num">0.007 ms</td></tr>
+    <tr><td class="num">1,000</td><td class="num">0.071 ms</td><td class="num">0.076 ms</td></tr>
+    <tr><td class="num">10,000</td><td class="num">1.91 ms</td><td class="num">9.29 ms</td></tr>
+    <tr><td class="num">100,000</td><td class="num">14.2 ms</td><td class="num">22.1 ms</td></tr>
+    <tr><td class="num">500,000</td><td class="num">60.4 ms</td><td class="num">77.8 ms</td></tr>
+  </table>
+  <p>Brute-force numpy search stays under 80 ms p95 even at 500K synthetic 384-dim vectors — orders of magnitude beyond any realistic paper-folder corpus. This provides empirical support for the design decision to forgo a dedicated vector database (e.g. Chroma, FAISS), which was originally motivated by packaging simplicity rather than performance.</p>
+
+  <h2>4. Discussion &amp; Limitations</h2>
+  <ul>
+    <li>The golden/hard-set split highlights a methodological point worth stating explicitly in any paper: curated "it works" test sets cannot measure comparative accuracy; discriminating evaluation requires deliberately adversarial cases.</li>
+    <li>Corpus size (2 papers, 71 chunks) is small; results on accuracy should be treated as a pilot signal, not a generalizable claim, without a larger benchmark (e.g. Qasper).</li>
+    <li>The bge-small latency anomaly is unresolved and worth root-causing before drawing conclusions about encoder choice on latency grounds.</li>
+    <li>All results were gathered on non-target hardware (Linux ARM64 sandbox); absolute latency claims require re-measurement on Apple Silicon before publication.</li>
+  </ul>
+
+  <h2>5. Reproducibility</h2>
+  <pre>python scripts/fetch_embed_model.py
+python benchmark/run_baseline.py          # MiniLM + cosine
+python benchmark/run_bge.py               # bge-small + cosine
+python benchmark/run_hybrid.py            # MiniLM + hybrid (golden set)
+python benchmark/run_hard_comparison.py   # all 3 variants (hard set)</pre>
+  <p>Source: <code>github.com/Motahareee/ragpaperreader</code>, <code>benchmark/</code> directory. Raw JSON reports in <code>benchmark/results/</code>.</p>
+
+  <footer>Generated as an evaluation report for PaperChat. Figure and tables suitable for direct inclusion in a systems paper draft, subject to re-measurement on target hardware.</footer>
+</article>
+</body>
+</html>
