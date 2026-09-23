@@ -9,4 +9,5 @@ test_papers/
 NEW_PROJECT_HANDOFF.md
 benchmark/models/*.gguf
 benchmark/bge_test_papers/
+benchmark/qasper_papers/
 .DS_Store

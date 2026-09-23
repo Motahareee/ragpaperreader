@@ -1,0 +1,129 @@
+{
+  "source": "Qasper (AllenAI) -- real arXiv PDFs re-parsed through our own pipeline",
+  "n_papers": 10,
+  "n_cases": 20,
+  "recall_at_5": 0.5,
+  "overlap_threshold": 0.6,
+  "per_case": [
+    {
+      "paper_id": "1910.03814",
+      "question": "What models do they propose?",
+      "best_overlap": 0.0,
+      "hit": false
+    },
+    {
+      "paper_id": "1910.03814",
+      "question": "How large is the dataset?",
+      "best_overlap": 0.0,
+      "hit": false
+    },
+    {
+      "paper_id": "1911.03243",
+      "question": "How much more coverage is in the new dataset?",
+      "best_overlap": 0.0,
+      "hit": false
+    },
+    {
+      "paper_id": "1911.03243",
+      "question": "How was coverage measured?",
+      "best_overlap": 0.28865979381443296,
+      "hit": false
+    },
+    {
+      "paper_id": "1909.00694",
+      "question": "What is the seed lexicon?",
+      "best_overlap": 0.0,
+      "hit": false
+    },
+    {
+      "paper_id": "1909.00694",
+      "question": "How are relations used to propagate polarity?",
+      "best_overlap": 0.9313725490196079,
+      "hit": true
+    },
+    {
+      "paper_id": "1908.06606",
+      "question": "What data is the language model pretrained on?",
+      "best_overlap": 0.9425287356321839,
+      "hit": true
+    },
+    {
+      "paper_id": "1908.06606",
+      "question": "Is all text in this dataset a question, or are there unrelated sentences in between questions?",
+      "best_overlap": 0.4025974025974026,
+      "hit": false
+    },
+    {
+      "paper_id": "2003.03612",
+      "question": "What types of various community texts have been investigated for exploring global structure of binomials?",
+      "best_overlap": 0.7021276595744681,
+      "hit": true
+    },
+    {
+      "paper_id": "2003.03612",
+      "question": "Are there any new finding in analasys of trinomials that was not present binomials?",
+      "best_overlap": 1.0,
+      "hit": true
+    },
+    {
+      "paper_id": "1809.10644",
+      "question": "What embedding algorithm and dimension size are used?",
+      "best_overlap": 0.2972972972972973,
+      "hit": false
+    },
+    {
+      "paper_id": "1809.10644",
+      "question": "What data are the embeddings trained on?",
+      "best_overlap": 0.918918918918919,
+      "hit": true
+    },
+    {
+      "paper_id": "1907.01413",
+      "question": "Do they propose any further additions that could be made to improve generalisation to unseen speakers?",
+      "best_overlap": 0.959349593495935,
+      "hit": true
+    },
+    {
+      "paper_id": "1907.01413",
+      "question": "What are the characteristics of the dataset?",
+      "best_overlap": 0.0,
+      "hit": false
+    },
+    {
+      "paper_id": "1901.02262",
+      "question": "How do they measure the quality of summaries?",
+      "best_overlap": 0.5961538461538461,
+      "hit": false
+    },
+    {
+      "paper_id": "1901.02262",
+      "question": "Does their model also take the expected answer style as input?",
+      "best_overlap": 0.39344262295081966,
+      "hit": false
+    },
+    {
+      "paper_id": "1610.09516",
+      "question": "What are the differences in the use of emojis between gang member and the rest of the Twitter population?",
+      "best_overlap": 0.9444444444444444,
+      "hit": true
+    },
+    {
+      "paper_id": "1610.09516",
+      "question": "What are the differences in the use of YouTube links between gang member and the rest of the Twitter population?",
+      "best_overlap": 0.9390243902439024,
+      "hit": true
+    },
+    {
+      "paper_id": "1911.03562",
+      "question": "Which NLP area have the highest average citation for woman author?",
+      "best_overlap": 1.0,
+      "hit": true
+    },
+    {
+      "paper_id": "1911.03562",
+      "question": "Which 3 NLP areas are cited the most?",
+      "best_overlap": 0.8571428571428571,
+      "hit": true
+    }
+  ]
+}

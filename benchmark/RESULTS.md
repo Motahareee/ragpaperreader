@@ -64,6 +64,16 @@ Synthetic 384-dim unit vectors, mean of 20 queries per size:
 
 Even at 500K vectors -- over 2,000x the actual 226-chunk corpus used here, and far beyond what any realistic "folder of papers" would contain -- brute-force search stays under 80ms p95. This is a direct, measured answer to "should we use a real vector database": no, not remotely close to the scale this tool operates at. The architectural choice (numpy over Chroma/FAISS, made originally for packaging-simplicity reasons) also holds up on pure performance grounds.
 
+## External validation (Qasper)
+
+Both sets above are self-authored, which risks unconsciously tuning toward favorable results. As an independent check: 20 questions sampled from **Qasper** (Dasigi et al. 2021 -- evidence-grounded QA over NLP papers, questions written by annotators who'd only read the abstract) across 10 papers. The *actual PDFs* were fetched from arXiv (Qasper's paper `id` is literally an arXiv id) and re-indexed through our own pipeline from scratch -- not Qasper's pre-parsed text -- so this tests the real parser, not just the embedding/retrieval logic. Hit = a retrieved chunk with >=60% word-overlap with Qasper's annotated evidence paragraph (exact match isn't meaningful since our chunk boundaries differ from Qasper's paragraph parsing).
+
+| Source | n | Recall@5 |
+|---|---|---|
+| Qasper-derived (external, unbiased) | 20 | 50% (10/20) |
+
+50% is markedly lower than the self-authored golden set's 100%, as expected -- unlike our own sets, this sample wasn't curated to already work. Inspecting a zero-overlap miss ("What is the seed lexicon?", paper 1909.00694) showed a genuine *cross-document confusion* failure: all 5 retrieved chunks came from an entirely unrelated paper in the sample (about word-ordering conventions in online text), not merely the wrong passage within the right paper -- short, low-context questions (common in Qasper by construction) appear especially vulnerable to this. This is the most defensible single accuracy figure in this report for citing broad system performance, precisely because it wasn't tuned by us. Caveat: the word-overlap metric is a conservative proxy (a correct retrieval straddling a chunk boundary could false-miss), and at n=20 individual cases swing the headline number by 5 points.
+
 ## Reproducing
 
 ```bash
@@ -72,6 +82,7 @@ python benchmark/run_baseline.py             # MiniLM + cosine, all axes
 python benchmark/run_bge.py                  # bge-small + cosine (downloads its own GGUF)
 python benchmark/run_hybrid.py               # MiniLM + hybrid, on the verified golden set
 python benchmark/run_hard_comparison.py      # all 3 variants on the adversarial hard set
+python benchmark/run_qasper.py               # external validation (fetches real arXiv PDFs + HF dataset)
 ```
 
-Raw JSON reports land in `benchmark/results/`. A full write-up with a system architecture diagram is in `benchmark/report.html`.
+Raw JSON reports land in `benchmark/results/`. Qasper PDFs are fetched at run time, not committed (avoids redistributing third-party paper copies). A full write-up with a system architecture diagram is in `benchmark/report.html`.
