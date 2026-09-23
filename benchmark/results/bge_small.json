@@ -1,0 +1,148 @@
+{
+  "variant": "bge_small_cosine",
+  "model_file_size_mb": 35.101837158203125,
+  "peak_rss_mb_after_model_load": 142.7578125,
+  "indexing": {
+    "per_doc": [
+      {
+        "doc": "adam.pdf",
+        "num_pages": 15,
+        "num_chunks": 38,
+        "parse_time_s": 0.09031241695629433,
+        "embed_time_s": 6.881073211028706,
+        "pages_per_sec": 2.151652598270565
+      },
+      {
+        "doc": "attention.pdf",
+        "num_pages": 15,
+        "num_chunks": 33,
+        "parse_time_s": 0.11838687496492639,
+        "embed_time_s": 4.3368539190269075,
+        "pages_per_sec": 3.366821389368768
+      }
+    ],
+    "total_pages": 30,
+    "total_time_s": 11.426626421976835,
+    "peak_rss_mb_after": 205.140625,
+    "peak_rss_mb_before": 142.7578125
+  },
+  "recall": {
+    "recall_at_k": 1.0,
+    "k": 5,
+    "n_cases": 8,
+    "per_case": [
+      {
+        "question": "What mechanism does the Transformer use instead of recurrence or convolution?",
+        "expected_page": 1,
+        "got_pages": [
+          1,
+          2,
+          1,
+          5,
+          0
+        ],
+        "hit": true,
+        "embed_time_s": 0.4989460000069812,
+        "search_time_s": 0.0036860830150544643
+      },
+      {
+        "question": "What is the computational complexity of self-attention compared to recurrent layers?",
+        "expected_page": 5,
+        "got_pages": [
+          5,
+          5,
+          6,
+          1,
+          5
+        ],
+        "hit": true,
+        "embed_time_s": 0.11153700004797429,
+        "search_time_s": 5.47499512322247e-05
+      },
+      {
+        "question": "How many GPUs were used to train the model?",
+        "expected_page": 6,
+        "got_pages": [
+          6,
+          7,
+          7,
+          1,
+          6
+        ],
+        "hit": true,
+        "embed_time_s": 0.09893500001635402,
+        "search_time_s": 0.00019791704835370183
+      },
+      {
+        "question": "What happens to model quality when the attention key size is reduced?",
+        "expected_page": 8,
+        "got_pages": [
+          3,
+          6,
+          4,
+          8,
+          0
+        ],
+        "hit": true,
+        "embed_time_s": 0.3853753340081312,
+        "search_time_s": 0.00017391698202118278
+      },
+      {
+        "question": "How is positional information added to the input embeddings?",
+        "expected_page": 5,
+        "got_pages": [
+          5,
+          5,
+          2,
+          4,
+          4
+        ],
+        "hit": true,
+        "embed_time_s": 0.1437243329710327,
+        "search_time_s": 7.641600677743554e-05
+      },
+      {
+        "question": "How does multi-head attention work?",
+        "expected_page": 4,
+        "got_pages": [
+          4,
+          2,
+          3,
+          3,
+          6
+        ],
+        "hit": true,
+        "embed_time_s": 0.07814137503737584,
+        "search_time_s": 7.1291986387223e-05
+      },
+      {
+        "question": "What optimizer and learning rate schedule was used for training?",
+        "expected_page": 6,
+        "got_pages": [
+          6,
+          6,
+          4,
+          6,
+          0
+        ],
+        "hit": true,
+        "embed_time_s": 0.04826279199915007,
+        "search_time_s": 0.00013895798474550247
+      },
+      {
+        "question": "What BLEU score did the big Transformer model achieve on English to German translation?",
+        "expected_page": 7,
+        "got_pages": [
+          7,
+          7,
+          7,
+          8,
+          9
+        ],
+        "hit": true,
+        "embed_time_s": 0.26075483398744836,
+        "search_time_s": 0.0009902080055326223
+      }
+    ]
+  }
+}

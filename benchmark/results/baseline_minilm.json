@@ -1,0 +1,183 @@
+{
+  "variant": "minilm_cosine_baseline",
+  "model_file_size_mb": 23.84954833984375,
+  "peak_rss_mb_after_model_load": 130.859375,
+  "indexing": {
+    "per_doc": [
+      {
+        "doc": "adam.pdf",
+        "num_pages": 15,
+        "num_chunks": 38,
+        "parse_time_s": 0.05388399999355897,
+        "embed_time_s": 2.985072460025549,
+        "pages_per_sec": 4.935904873051615
+      },
+      {
+        "doc": "attention.pdf",
+        "num_pages": 15,
+        "num_chunks": 33,
+        "parse_time_s": 0.10220412496710196,
+        "embed_time_s": 2.113426707976032,
+        "pages_per_sec": 6.770080907420279
+      }
+    ],
+    "total_pages": 30,
+    "total_time_s": 5.254587292962242,
+    "peak_rss_mb_after": 193.3125,
+    "peak_rss_mb_before": 130.984375
+  },
+  "recall": {
+    "recall_at_k": 1.0,
+    "k": 5,
+    "n_cases": 8,
+    "per_case": [
+      {
+        "question": "What mechanism does the Transformer use instead of recurrence or convolution?",
+        "expected_page": 1,
+        "got_pages": [
+          1,
+          1,
+          2,
+          1,
+          4
+        ],
+        "hit": true,
+        "embed_time_s": 0.013161458016838878,
+        "search_time_s": 0.0006801660056225955
+      },
+      {
+        "question": "What is the computational complexity of self-attention compared to recurrent layers?",
+        "expected_page": 5,
+        "got_pages": [
+          5,
+          5,
+          6,
+          1,
+          2
+        ],
+        "hit": true,
+        "embed_time_s": 0.004314332967624068,
+        "search_time_s": 3.754202043637633e-05
+      },
+      {
+        "question": "How many GPUs were used to train the model?",
+        "expected_page": 6,
+        "got_pages": [
+          6,
+          7,
+          7,
+          6,
+          0
+        ],
+        "hit": true,
+        "embed_time_s": 0.0033101249719038606,
+        "search_time_s": 2.13750172406435e-05
+      },
+      {
+        "question": "What happens to model quality when the attention key size is reduced?",
+        "expected_page": 8,
+        "got_pages": [
+          3,
+          8,
+          6,
+          4,
+          5
+        ],
+        "hit": true,
+        "embed_time_s": 0.004413500020746142,
+        "search_time_s": 2.3707980290055275e-05
+      },
+      {
+        "question": "How is positional information added to the input embeddings?",
+        "expected_page": 5,
+        "got_pages": [
+          2,
+          4,
+          2,
+          4,
+          5
+        ],
+        "hit": true,
+        "embed_time_s": 0.004215291992295533,
+        "search_time_s": 2.2209016606211662e-05
+      },
+      {
+        "question": "How does multi-head attention work?",
+        "expected_page": 4,
+        "got_pages": [
+          2,
+          12,
+          3,
+          4,
+          2
+        ],
+        "hit": true,
+        "embed_time_s": 0.0030613330309279263,
+        "search_time_s": 1.5208031982183456e-05
+      },
+      {
+        "question": "What optimizer and learning rate schedule was used for training?",
+        "expected_page": 6,
+        "got_pages": [
+          6,
+          4,
+          6,
+          6,
+          10
+        ],
+        "hit": true,
+        "embed_time_s": 0.002850916003808379,
+        "search_time_s": 1.3917044270783663e-05
+      },
+      {
+        "question": "What BLEU score did the big Transformer model achieve on English to German translation?",
+        "expected_page": 7,
+        "got_pages": [
+          7,
+          7,
+          7,
+          8,
+          9
+        ],
+        "hit": true,
+        "embed_time_s": 0.0029748749802820385,
+        "search_time_s": 1.4333054423332214e-05
+      }
+    ]
+  },
+  "scalability": {
+    "dim": 384,
+    "results": [
+      {
+        "n_vectors": 10,
+        "mean_latency_ms": 0.0029022019589319825,
+        "p95_latency_ms": 0.007061063661240046
+      },
+      {
+        "n_vectors": 100,
+        "mean_latency_ms": 0.008916744263842702,
+        "p95_latency_ms": 0.01020623312797399
+      },
+      {
+        "n_vectors": 1000,
+        "mean_latency_ms": 0.07105829427018762,
+        "p95_latency_ms": 0.07586874417029321
+      },
+      {
+        "n_vectors": 10000,
+        "mean_latency_ms": 1.9095352967269719,
+        "p95_latency_ms": 9.284694324014708
+      },
+      {
+        "n_vectors": 100000,
+        "mean_latency_ms": 14.225631291628815,
+        "p95_latency_ms": 22.088333318242807
+      },
+      {
+        "n_vectors": 500000,
+        "mean_latency_ms": 60.42028125375509,
+        "p95_latency_ms": 77.75876490632072
+      }
+    ]
+  }
+}

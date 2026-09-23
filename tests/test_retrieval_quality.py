@@ -48,14 +48,26 @@ def _load_cases():
     return data["cases"]
 
 
+def _expected_doc_name() -> str:
+    return json.loads(GOLDEN_SET_PATH.read_text())["source_pdf"]
+
+
+def _hit(results: list[dict], expected_page: int, expected_doc: str) -> bool:
+    # Must match on (doc, page), not page alone -- test_papers/ now holds
+    # more than one PDF, so a same-numbered page in the *wrong* document
+    # would otherwise silently count as a false-positive hit.
+    return any(r["page"] == expected_page and Path(r["doc_path"]).name == expected_doc for r in results)
+
+
 @pytest.mark.parametrize("case", _load_cases())
 def test_expected_page_is_in_top_5_results(indexed_store, case):
     embedder, store = indexed_store
     query_vec = embedder.embed_one(case["question"])
     results = store.search(query_vec, top_k=5)
-    pages = [r["page"] for r in results]
-    assert case["expected_page"] in pages, (
-        f"Expected page {case['expected_page']} not in top-5 {pages} "
+    expected_doc = _expected_doc_name()
+    assert _hit(results, case["expected_page"], expected_doc), (
+        f"Expected {expected_doc} page {case['expected_page']} not in top-5 "
+        f"{[(Path(r['doc_path']).name, r['page']) for r in results]} "
         f"for question: {case['question']!r}"
     )
 
@@ -67,11 +79,12 @@ def test_recall_at_5_meets_baseline(indexed_store):
     cases = _load_cases()
     if not cases:
         pytest.skip("Golden set or its source PDF not available.")
+    expected_doc = _expected_doc_name()
     hits = 0
     for case in cases:
         query_vec = embedder.embed_one(case["question"])
-        pages = [r["page"] for r in store.search(query_vec, top_k=5)]
-        if case["expected_page"] in pages:
+        results = store.search(query_vec, top_k=5)
+        if _hit(results, case["expected_page"], expected_doc):
             hits += 1
     recall = hits / len(cases)
     assert recall >= 0.85, f"recall@5 dropped to {recall:.2f} ({hits}/{len(cases)})"

@@ -1,0 +1,35 @@
+{
+  "description": "Adversarial/harder supplementary set spanning both test_papers/ PDFs, built specifically to differentiate retrieval methods (the original tests/golden/qa_set.json was curated to only include questions that already worked with cosine, so it can't show accuracy differences between methods). Includes cases verified to genuinely MISS with plain MiniLM+cosine as of this benchmark run.",
+  "cases": [
+    {
+      "question": "What value of epsilon was used in the Adam algorithm?",
+      "expected_doc": "adam.pdf",
+      "expected_page": 1
+    },
+    {
+      "question": "What warmup schedule was used for the learning rate?",
+      "expected_doc": "attention.pdf",
+      "expected_page": 6
+    },
+    {
+      "question": "What dropout probability Pdrop was used for the base model?",
+      "expected_doc": "attention.pdf",
+      "expected_page": 7
+    },
+    {
+      "question": "What is the wavelength range used in the positional encoding?",
+      "expected_doc": "attention.pdf",
+      "expected_page": 5
+    },
+    {
+      "question": "What dataset was used for the English to German translation task?",
+      "expected_doc": "attention.pdf",
+      "expected_page": 7
+    },
+    {
+      "question": "What regularization technique is used besides dropout?",
+      "expected_doc": "attention.pdf",
+      "expected_page": 8
+    }
+  ]
+}
