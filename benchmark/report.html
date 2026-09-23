@@ -287,10 +287,12 @@
   <h3>3.5 External Validation (Qasper)</h3>
   <p>Both accuracy sets above are self-authored, which risks unconsciously tuning the corpus/questions toward favorable results. As an independent check, 20 questions were sampled from <b>Qasper</b> <span style="font-size:12px;color:#6b6b70">(Dasigi et al. 2021 — evidence-grounded QA over NLP papers, questions written by annotators who had only read the abstract)</span> across 10 papers. Critically, the <i>actual PDFs</i> were fetched from arXiv using Qasper's paper IDs and re-indexed through our own pipeline from scratch — not Qasper's pre-parsed text — so this tests the real system, parser included. A hit was scored when a retrieved chunk had ≥60% word-overlap with Qasper's independently-annotated evidence paragraph (exact-text matching isn't meaningful here, since our chunk boundaries differ from Qasper's own paragraph parsing).</p>
   <table>
-    <tr><th>Source</th><th class="num">n</th><th class="num">Recall@5</th></tr>
-    <tr><td>Qasper-derived (external, unbiased)</td><td class="num">20</td><td class="num">50% (10/20)</td></tr>
+    <tr><th>Variant</th><th class="num">Recall@5 (n=20)</th></tr>
+    <tr><td>MiniLM + cosine (shipped)</td><td class="num">50% (10/20)</td></tr>
+    <tr><td>bge-small + cosine</td><td class="num">50% (10/20) — tied</td></tr>
+    <tr class="highlight"><td>MiniLM + hybrid (cosine + BM25)</td><td class="num">60% (12/20)</td></tr>
   </table>
-  <p>50% is markedly lower than the self-authored golden set's 100%, as expected — this sample wasn't curated to already work. Inspecting a zero-overlap miss ("What is the seed lexicon?", paper 1909.00694) showed a genuine <i>cross-document confusion</i> failure: all 5 retrieved chunks came from an entirely unrelated paper in the sample (about word-ordering conventions in online text), not merely the wrong passage within the right paper. Short, low-context questions — common in Qasper by construction, since annotators wrote them having only read the abstract — appear especially vulnerable to this. This external number is the most defensible single accuracy figure in this report for citing system performance broadly, precisely because it wasn't tuned by us.</p>
+  <p>All three shipped-system numbers are markedly lower than the self-authored golden set's 100%, as expected — this sample wasn't curated to already work. Hybrid retrieval's improvement (50% → 60%) holds up on this unbiased external sample, corroborating the same finding from the self-authored hard set (§3.1) rather than being an artifact of how that set was built — meaningfully stronger evidence for shipping it. bge-small shows no advantage here, ties MiniLM exactly, in contrast to its hard-set result — a reminder that encoder comparisons are corpus-dependent and don't reliably generalize across samples. Inspecting a zero-overlap cosine miss ("What is the seed lexicon?", paper 1909.00694) showed a genuine <i>cross-document confusion</i> failure: all 5 retrieved chunks came from an entirely unrelated paper in the sample (about word-ordering conventions in online text), not merely the wrong passage within the right paper. Short, low-context questions — common in Qasper by construction, since annotators wrote them having only read the abstract — appear especially vulnerable to this.</p>
 
   <h2>4. Discussion &amp; Limitations</h2>
   <ul>
@@ -308,7 +310,8 @@ python benchmark/run_baseline.py          # MiniLM + cosine
 python benchmark/run_bge.py               # bge-small + cosine
 python benchmark/run_hybrid.py            # MiniLM + hybrid (golden set)
 python benchmark/run_hard_comparison.py   # all 3 variants (hard set)
-python benchmark/run_qasper.py            # external validation (fetches real arXiv PDFs + HF dataset)</pre>
+python benchmark/run_qasper.py            # external validation, MiniLM+cosine only
+python benchmark/run_qasper_comparison.py # external validation, all 3 variants</pre>
   <p>Source: <code>github.com/Motahareee/ragpaperreader</code>, <code>benchmark/</code> directory. Raw JSON reports in <code>benchmark/results/</code>. Qasper PDFs are fetched at run time (not committed to the repo, to avoid redistributing third-party paper copies).</p>
 
   <footer>Generated as an evaluation report for PaperChat. Figure and tables suitable for direct inclusion in a systems paper draft, subject to re-measurement on target hardware.</footer>
