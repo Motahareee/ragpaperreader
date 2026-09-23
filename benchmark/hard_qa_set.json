@@ -1,5 +1,5 @@
 {
-  "description": "Adversarial/harder supplementary set spanning both test_papers/ PDFs, built specifically to differentiate retrieval methods (the original tests/golden/qa_set.json was curated to only include questions that already worked with cosine, so it can't show accuracy differences between methods). Includes cases verified to genuinely MISS with plain MiniLM+cosine as of this benchmark run.",
+  "description": "Adversarial/harder supplementary set spanning all 5 test_papers/ PDFs, built specifically to differentiate retrieval methods (the verified golden set is curated to only include questions that already work with cosine, so it can't show accuracy differences between methods). Includes cases verified to genuinely MISS with plain MiniLM+cosine as of this benchmark run.",
   "cases": [
     {
       "question": "What value of epsilon was used in the Adam algorithm?",
@@ -30,6 +30,31 @@
       "question": "What regularization technique is used besides dropout?",
       "expected_doc": "attention.pdf",
       "expected_page": 8
+    },
+    {
+      "question": "What two corpora was BERT pre-trained on?",
+      "expected_doc": "bert.pdf",
+      "expected_page": 4
+    },
+    {
+      "question": "How many layers does the deepest ResNet architecture evaluated have?",
+      "expected_doc": "resnet.pdf",
+      "expected_page": 0
+    },
+    {
+      "question": "What dataset besides ImageNet was used to further study residual networks?",
+      "expected_doc": "resnet.pdf",
+      "expected_page": 6
+    },
+    {
+      "question": "What datasets was dropout initially evaluated on?",
+      "expected_doc": "dropout.pdf",
+      "expected_page": 1
+    },
+    {
+      "question": "How is positional information added to the input embeddings?",
+      "expected_doc": "attention.pdf",
+      "expected_page": 5
     }
   ]
 }

@@ -146,7 +146,7 @@
 
   <div class="abstract">
     <b>Summary</b>
-    PaperChat is a fully local, privacy-preserving retrieval-augmented generation (RAG) system for question-answering over a folder of PDF papers, packaged as a single portable application. This report evaluates three design choices empirically: (1) a lightweight bundled sentence encoder vs. a stronger alternative, (2) dense cosine retrieval vs. hybrid dense+sparse retrieval, and (3) a brute-force in-memory vector store vs. the assumption that a dedicated vector database is necessary at this scale. All measurements were taken on a 2-paper, 71-chunk test corpus.
+    PaperChat is a fully local, privacy-preserving retrieval-augmented generation (RAG) system for question-answering over a folder of PDF papers, packaged as a single portable application. This report evaluates three design choices empirically: (1) a lightweight bundled sentence encoder vs. a stronger alternative, (2) dense cosine retrieval vs. hybrid dense+sparse retrieval, and (3) a brute-force in-memory vector store vs. the assumption that a dedicated vector database is necessary at this scale. Measurements were taken on a 5-paper, 226-chunk test corpus spanning multiple ML subfields (Transformers, optimization, language pretraining, computer vision, regularization) to test topic-overlap effects that a single-paper or single-topic corpus cannot surface.
   </div>
 
   <h2>1. System Design</h2>
@@ -238,7 +238,7 @@
 
   <h2>2. Evaluation Methodology</h2>
   <p>Three retrieval variants were compared under an identical harness: <b>(a)</b> the shipped system — MiniLM-L6-v2 (GGUF, Q8_0) with cosine similarity; <b>(b)</b> an encoder swap to bge-small-en-v1.5 (GGUF, Q8_0), same retrieval logic; <b>(c)</b> a hybrid retrieval variant keeping MiniLM but fusing cosine and BM25 rankings via Reciprocal Rank Fusion (k=60).</p>
-  <p>Two accuracy sets were used. The first is a hand-verified golden set (n=8) built by confirming each answer's page by inspection — but because it was curated against the shipped system, it cannot show accuracy <i>differences</i> between variants (all three score 100% on it). A second, harder set (n=6) was constructed specifically to include cross-document, keyword-heavy questions verified to fail under plain cosine retrieval, to obtain a discriminating signal.</p>
+  <p>Two accuracy sets were used, both spanning all 5 papers. The first is a hand-verified <i>golden set</i> (n=12) built by confirming each answer's (document, page) by direct inspection of the source PDF. One question originally in this set ("How is positional information added to the input embeddings?") was reclassified into the hard set after expanding the corpus made it genuinely ambiguous — it began competing with BERT's own positional-embedding discussion, a concrete example of retrieval degrading as topically-overlapping documents are added. The second, <i>hard set</i> (n=11), was constructed specifically to include cross-document and keyword-heavy questions verified to fail under plain cosine retrieval, to obtain a discriminating signal that a curated "already works" set cannot provide.</p>
 
   <div class="callout"><b>Hardware caveat:</b> all measurements were taken on an emulated Linux ARM64 sandbox, not the target Apple Silicon deployment target (no Metal acceleration available). Relative comparisons between variants below are reliable; absolute latency numbers should be re-measured on target hardware before being cited as production figures.</div>
 
@@ -246,49 +246,51 @@
 
   <h3>3.1 Accuracy</h3>
   <table>
-    <tr><th>Variant</th><th class="num">Golden set (n=8)</th><th class="num">Hard set (n=6)</th></tr>
-    <tr><td>MiniLM + cosine (shipped)</td><td class="num">100%</td><td class="num">67% (4/6)</td></tr>
-    <tr><td>bge-small + cosine</td><td class="num">100%</td><td class="num">67% (4/6, different miss)</td></tr>
-    <tr class="highlight"><td>MiniLM + hybrid (cosine + BM25)</td><td class="num">100%</td><td class="num">83% (5/6)</td></tr>
+    <tr><th>Variant</th><th class="num">Golden set (n=12)</th><th class="num">Hard set (n=11)</th></tr>
+    <tr><td>MiniLM + cosine (shipped)</td><td class="num">100% (12/12)</td><td class="num">27% (3/11)</td></tr>
+    <tr><td>bge-small + cosine</td><td class="num">83% (10/12)</td><td class="num">64% (7/11)</td></tr>
+    <tr class="highlight"><td>MiniLM + hybrid (cosine + BM25)</td><td class="num">100% (12/12)</td><td class="num">64% (7/11)</td></tr>
   </table>
-  <p>Hybrid retrieval recovered a miss common to both pure-cosine variants — a keyword-heavy query ("What dataset was used for the English-to-German translation task?") — consistent with the known failure mode of dense embeddings under-weighting exact lexical matches that sparse retrieval catches directly.</p>
+  <p>No single variant dominates. bge-small trades golden-set accuracy for a large hard-set gain — a real, reproducible gap (10/12 vs. 12/12) that only appeared once the corpus grew to 5 topically-varied papers, contradicting the general MTEB-benchmark expectation that bge-small should outperform MiniLM outright. Hybrid retrieval is the strictly better overall choice of the three: it preserves MiniLM's full golden-set accuracy while matching bge-small's hard-set improvement, more than doubling the shipped system's hard-set recall (27% → 64%). The corpus-scale effect itself is a finding worth stating plainly: cosine-only accuracy degraded sharply as more topically-adjacent documents were added (recall the reclassified positional-embedding question in §2) — a discriminating hard set is necessary precisely because this degradation is invisible to any golden set built against a small corpus.</p>
 
   <h3>3.2 Latency</h3>
   <table>
     <tr><th>Stage</th><th class="num">MiniLM</th><th class="num">bge-small</th></tr>
-    <tr><td>Indexing throughput</td><td class="num">4.9–6.8 pages/s</td><td class="num">2.2–3.4 pages/s</td></tr>
-    <tr><td>Single-query embed</td><td class="num">4.8 ms</td><td class="num">203 ms</td></tr>
-    <tr><td>Search (numpy dot product)</td><td class="num">0.10 ms</td><td class="num">0.67 ms</td></tr>
-    <tr><td>Hybrid query (embed+BM25+fuse)</td><td class="num">15.5 ms</td><td class="num">—</td></tr>
+    <tr><td>Indexing throughput</td><td class="num">1.3–4.9 pages/s</td><td class="num">1.6–3.9 pages/s</td></tr>
+    <tr><td>Single-query embed (run 1, 2-paper corpus)</td><td class="num">4.8 ms</td><td class="num">203 ms</td></tr>
+    <tr><td>Single-query embed (run 2, 5-paper corpus)</td><td class="num">6.8 ms</td><td class="num">14.6 ms</td></tr>
+    <tr><td>Search (numpy dot product)</td><td class="num">0.46 ms</td><td class="num">1.23 ms</td></tr>
+    <tr><td>Hybrid query (embed+BM25+fuse)</td><td class="num">7.8 ms</td><td class="num">—</td></tr>
   </table>
-  <p>bge-small's single-query latency (~42×) is disproportionate to its batch-embedding slowdown (~2×, roughly matching its ~2× transformer-layer depth relative to MiniLM) — flagged as an open question likely tied to per-call overhead in this specific GGUF conversion, not a fundamental architectural cost.</p>
+  <p>Single-query embed latency is reported for both runs deliberately: bge-small's measured latency swung by ~14× between runs (203ms → 14.6ms) on what should be a corpus-size-independent measurement, indicating the original "~42× slower than MiniLM" figure was likely inflated by cold-start/measurement noise rather than a stable architectural cost. Treat both bge-small numbers as unreliable until re-measured with a proper warmup + repeated-trial protocol — reporting a single-shot latency number, as this benchmark initially did, is a methodology mistake worth calling out rather than hiding.</p>
 
   <h3>3.3 Memory</h3>
   <table>
     <tr><th>Checkpoint</th><th class="num">MiniLM</th><th class="num">bge-small</th></tr>
     <tr><td>Model file size</td><td class="num">23.8 MB</td><td class="num">35.1 MB</td></tr>
-    <tr><td>Peak RSS after model load</td><td class="num">130.9 MB</td><td class="num">142.8 MB</td></tr>
-    <tr><td>Peak RSS after indexing (2 papers)</td><td class="num">193.3 MB</td><td class="num">205.1 MB</td></tr>
+    <tr><td>Peak RSS after model load</td><td class="num">130.8 MB</td><td class="num">142.5 MB</td></tr>
+    <tr><td>Peak RSS after indexing (5 papers, 226 chunks)</td><td class="num">194.3 MB</td><td class="num">205.9 MB</td></tr>
   </table>
-  <p>Both are small relative to the ~4.7 GB instruct LLM, which dominates real-world memory footprint once loaded for generation.</p>
+  <p>Memory scaled negligibly from 2 to 5 papers (+1 MB peak RSS), as expected for a numpy-array store — dominated by the fixed model weights, not the corpus. Both encoders are small relative to the ~4.7 GB instruct LLM, which dominates real-world memory footprint once loaded for generation.</p>
 
   <h3>3.4 Scalability of Brute-Force Search</h3>
   <table>
     <tr><th class="num">n vectors</th><th class="num">mean latency</th><th class="num">p95 latency</th></tr>
-    <tr><td class="num">10</td><td class="num">0.003 ms</td><td class="num">0.007 ms</td></tr>
-    <tr><td class="num">1,000</td><td class="num">0.071 ms</td><td class="num">0.076 ms</td></tr>
-    <tr><td class="num">10,000</td><td class="num">1.91 ms</td><td class="num">9.29 ms</td></tr>
-    <tr><td class="num">100,000</td><td class="num">14.2 ms</td><td class="num">22.1 ms</td></tr>
-    <tr><td class="num">500,000</td><td class="num">60.4 ms</td><td class="num">77.8 ms</td></tr>
+    <tr><td class="num">10</td><td class="num">0.003 ms</td><td class="num">0.008 ms</td></tr>
+    <tr><td class="num">1,000</td><td class="num">0.074 ms</td><td class="num">0.087 ms</td></tr>
+    <tr><td class="num">10,000</td><td class="num">1.74 ms</td><td class="num">2.96 ms</td></tr>
+    <tr><td class="num">100,000</td><td class="num">14.4 ms</td><td class="num">19.7 ms</td></tr>
+    <tr><td class="num">500,000</td><td class="num">55.7 ms</td><td class="num">60.7 ms</td></tr>
   </table>
-  <p>Brute-force numpy search stays under 80 ms p95 even at 500K synthetic 384-dim vectors — orders of magnitude beyond any realistic paper-folder corpus. This provides empirical support for the design decision to forgo a dedicated vector database (e.g. Chroma, FAISS), which was originally motivated by packaging simplicity rather than performance.</p>
+  <p>Brute-force numpy search stays under 80 ms p95 even at 500K synthetic 384-dim vectors — over 2,000× the actual corpus used in this evaluation (226 chunks) and orders of magnitude beyond any realistic paper-folder corpus. This provides empirical support for the design decision to forgo a dedicated vector database (e.g. Chroma, FAISS), which was originally motivated by packaging simplicity rather than performance.</p>
 
   <h2>4. Discussion &amp; Limitations</h2>
   <ul>
     <li>The golden/hard-set split highlights a methodological point worth stating explicitly in any paper: curated "it works" test sets cannot measure comparative accuracy; discriminating evaluation requires deliberately adversarial cases.</li>
-    <li>Corpus size (2 papers, 71 chunks) is small; results on accuracy should be treated as a pilot signal, not a generalizable claim, without a larger benchmark (e.g. Qasper).</li>
-    <li>The bge-small latency anomaly is unresolved and worth root-causing before drawing conclusions about encoder choice on latency grounds.</li>
+    <li>Expanding the corpus from 2 to 5 papers changed the accuracy story materially — both by causing a previously-easy question to fail (topic overlap with a new document) and by surfacing a real bge-small vs. MiniLM accuracy gap invisible at smaller scale. This is itself evidence that accuracy results at n=2 papers were not representative; results at n=5 should still be treated as an early signal, not a generalizable claim, without a larger external benchmark (e.g. Qasper).</li>
+    <li>The bge-small single-query latency figure was unstable across runs (203ms → 14.6ms) and should be re-measured with a proper warmup + repeated-trial protocol before being used to argue anything about encoder choice on latency grounds — this benchmark's first pass made exactly the single-shot-measurement mistake it should have avoided.</li>
     <li>All results were gathered on non-target hardware (Linux ARM64 sandbox); absolute latency claims require re-measurement on Apple Silicon before publication.</li>
+    <li>Hybrid retrieval (cosine + BM25 via RRF) is the best-supported change to actually ship: it strictly dominates plain cosine (equal or better on both sets) and avoids bge-small's golden-set regression, at a small latency cost (7.8ms vs. 0.46ms search-only) that is negligible next to LLM generation time.</li>
   </ul>
 
   <h2>5. Reproducibility</h2>

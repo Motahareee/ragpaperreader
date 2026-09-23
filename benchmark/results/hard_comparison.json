@@ -1,8 +1,8 @@
 {
   "hard_set_results": {
-    "minilm_cosine": 0.6666666666666666,
-    "minilm_hybrid": 0.8333333333333334,
-    "bge_cosine": 0.6666666666666666
+    "minilm_cosine": 0.2727272727272727,
+    "minilm_hybrid": 0.6363636363636364,
+    "bge_cosine": 0.6363636363636364
   },
-  "n_cases": 6
+  "n_cases": 11
 }

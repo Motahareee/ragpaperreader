@@ -1,7 +1,7 @@
 {
   "variant": "minilm_hybrid_rrf",
   "recall_at_k": 1.0,
-  "n_cases": 8,
+  "n_cases": 12,
   "per_case": [
     {
       "question": "What mechanism does the Transformer use instead of recurrence or convolution?",
@@ -10,11 +10,11 @@
         1,
         1,
         1,
-        2,
-        5
+        11,
+        2
       ],
       "hit": true,
-      "time_s": 0.025713125010952353
+      "time_s": 0.029079333995468915
     },
     {
       "question": "What is the computational complexity of self-attention compared to recurrent layers?",
@@ -23,50 +23,37 @@
         5,
         5,
         6,
-        5,
-        1
+        1,
+        5
       ],
       "hit": true,
-      "time_s": 0.006657541962340474
+      "time_s": 0.029729166999459267
     },
     {
       "question": "How many GPUs were used to train the model?",
       "expected_page": 6,
       "got_pages": [
         7,
+        6,
         7,
-        6,
-        6,
-        7
+        13,
+        11
       ],
       "hit": true,
-      "time_s": 0.009508958028163761
+      "time_s": 0.00357279198942706
     },
     {
       "question": "What happens to model quality when the attention key size is reduced?",
       "expected_page": 8,
       "got_pages": [
-        8,
         5,
-        5,
-        4,
-        8
-      ],
-      "hit": true,
-      "time_s": 0.04035270900931209
-    },
-    {
-      "question": "How is positional information added to the input embeddings?",
-      "expected_page": 5,
-      "got_pages": [
-        5,
-        4,
         5,
         2,
+        8,
         4
       ],
       "hit": true,
-      "time_s": 0.02056616696063429
+      "time_s": 0.003871374996379018
     },
     {
       "question": "How does multi-head attention work?",
@@ -75,24 +62,24 @@
         4,
         2,
         3,
-        2,
-        3
+        3,
+        2
       ],
       "hit": true,
-      "time_s": 0.0036402909900061786
+      "time_s": 0.002515917003620416
     },
     {
       "question": "What optimizer and learning rate schedule was used for training?",
       "expected_page": 6,
       "got_pages": [
         6,
+        11,
         6,
-        6,
-        7,
+        12,
         7
       ],
       "hit": true,
-      "time_s": 0.005675624997820705
+      "time_s": 0.0035168330068700016
     },
     {
       "question": "What BLEU score did the big Transformer model achieve on English to German translation?",
@@ -101,12 +88,77 @@
         7,
         7,
         7,
-        0,
-        9
+        9,
+        0
       ],
       "hit": true,
-      "time_s": 0.012012833962216973
+      "time_s": 0.0035499579971656203
+    },
+    {
+      "question": "What are the two pre-training tasks used by BERT?",
+      "expected_page": 3,
+      "got_pages": [
+        13,
+        2,
+        11,
+        4,
+        3
+      ],
+      "hit": true,
+      "time_s": 0.00354925001738593
+    },
+    {
+      "question": "What percentage of tokens are masked during BERT masked language model pretraining?",
+      "expected_page": 3,
+      "got_pages": [
+        3,
+        15,
+        11,
+        2,
+        3
+      ],
+      "hit": true,
+      "time_s": 0.0036927080363966525
+    },
+    {
+      "question": "What problem do residual connections address in very deep neural networks?",
+      "expected_page": 0,
+      "got_pages": [
+        0,
+        1,
+        2,
+        2,
+        0
+      ],
+      "hit": true,
+      "time_s": 0.003802791005000472
+    },
+    {
+      "question": "What was the top-5 error comparison table showing ResNet against VGG and GoogLeNet?",
+      "expected_page": 5,
+      "got_pages": [
+        5,
+        6,
+        7,
+        11,
+        4
+      ],
+      "hit": true,
+      "time_s": 0.003458750026766211
+    },
+    {
+      "question": "What does dropout prevent among feature detectors?",
+      "expected_page": 0,
+      "got_pages": [
+        0,
+        0,
+        1,
+        17,
+        8
+      ],
+      "hit": true,
+      "time_s": 0.002704958023969084
     }
   ],
-  "avg_query_time_ms": 15.515906365180854
+  "avg_query_time_ms": 7.7536527581590535
 }

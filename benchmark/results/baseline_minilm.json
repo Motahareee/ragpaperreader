@@ -1,53 +1,101 @@
 {
   "variant": "minilm_cosine_baseline",
   "model_file_size_mb": 23.84954833984375,
-  "peak_rss_mb_after_model_load": 130.859375,
+  "peak_rss_mb_after_model_load": 130.796875,
   "indexing": {
     "per_doc": [
       {
         "doc": "adam.pdf",
         "num_pages": 15,
         "num_chunks": 38,
-        "parse_time_s": 0.05388399999355897,
-        "embed_time_s": 2.985072460025549,
-        "pages_per_sec": 4.935904873051615
+        "parse_time_s": 0.18582058401079848,
+        "embed_time_s": 11.20997217198601,
+        "pages_per_sec": 1.316275253611167
       },
       {
         "doc": "attention.pdf",
         "num_pages": 15,
         "num_chunks": 33,
-        "parse_time_s": 0.10220412496710196,
-        "embed_time_s": 2.113426707976032,
-        "pages_per_sec": 6.770080907420279
+        "parse_time_s": 0.34235599997919053,
+        "embed_time_s": 2.975357001007069,
+        "pages_per_sec": 4.521186731806198
+      },
+      {
+        "doc": "bert.pdf",
+        "num_pages": 16,
+        "num_chunks": 53,
+        "parse_time_s": 0.09997608402045444,
+        "embed_time_s": 5.908452170027886,
+        "pages_per_sec": 2.6629260304838573
+      },
+      {
+        "doc": "dropout.pdf",
+        "num_pages": 18,
+        "num_chunks": 52,
+        "parse_time_s": 0.10017441702075303,
+        "embed_time_s": 3.569586001976859,
+        "pages_per_sec": 4.904952352425411
+      },
+      {
+        "doc": "resnet.pdf",
+        "num_pages": 12,
+        "num_chunks": 50,
+        "parse_time_s": 0.09870904101990163,
+        "embed_time_s": 4.068890877009835,
+        "pages_per_sec": 2.879355081106991
       }
     ],
-    "total_pages": 30,
-    "total_time_s": 5.254587292962242,
-    "peak_rss_mb_after": 193.3125,
-    "peak_rss_mb_before": 130.984375
+    "total_pages": 76,
+    "total_time_s": 28.559294348058756,
+    "peak_rss_mb_after": 194.296875,
+    "peak_rss_mb_before": 130.921875
   },
   "recall": {
     "recall_at_k": 1.0,
     "k": 5,
-    "n_cases": 8,
+    "n_cases": 12,
     "per_case": [
       {
         "question": "What mechanism does the Transformer use instead of recurrence or convolution?",
         "expected_page": 1,
+        "expected_doc": "attention.pdf",
         "got_pages": [
           1,
           1,
           2,
-          1,
-          4
+          2,
+          11
+        ],
+        "got": [
+          [
+            "attention.pdf",
+            1
+          ],
+          [
+            "attention.pdf",
+            1
+          ],
+          [
+            "bert.pdf",
+            2
+          ],
+          [
+            "attention.pdf",
+            2
+          ],
+          [
+            "bert.pdf",
+            11
+          ]
         ],
         "hit": true,
-        "embed_time_s": 0.013161458016838878,
-        "search_time_s": 0.0006801660056225955
+        "embed_time_s": 0.00728279200848192,
+        "search_time_s": 0.005042499979026616
       },
       {
         "question": "What is the computational complexity of self-attention compared to recurrent layers?",
         "expected_page": 5,
+        "expected_doc": "attention.pdf",
         "got_pages": [
           5,
           5,
@@ -55,55 +103,110 @@
           1,
           2
         ],
+        "got": [
+          [
+            "attention.pdf",
+            5
+          ],
+          [
+            "attention.pdf",
+            5
+          ],
+          [
+            "attention.pdf",
+            6
+          ],
+          [
+            "attention.pdf",
+            1
+          ],
+          [
+            "attention.pdf",
+            2
+          ]
+        ],
         "hit": true,
-        "embed_time_s": 0.004314332967624068,
-        "search_time_s": 3.754202043637633e-05
+        "embed_time_s": 0.008053583034779876,
+        "search_time_s": 4.4707965571433306e-05
       },
       {
         "question": "How many GPUs were used to train the model?",
         "expected_page": 6,
+        "expected_doc": "attention.pdf",
         "got_pages": [
           6,
           7,
-          7,
-          6,
-          0
+          11,
+          16,
+          9
+        ],
+        "got": [
+          [
+            "attention.pdf",
+            6
+          ],
+          [
+            "attention.pdf",
+            7
+          ],
+          [
+            "dropout.pdf",
+            11
+          ],
+          [
+            "dropout.pdf",
+            16
+          ],
+          [
+            "resnet.pdf",
+            9
+          ]
         ],
         "hit": true,
-        "embed_time_s": 0.0033101249719038606,
-        "search_time_s": 2.13750172406435e-05
+        "embed_time_s": 0.002837874984834343,
+        "search_time_s": 3.1415955163538456e-05
       },
       {
         "question": "What happens to model quality when the attention key size is reduced?",
         "expected_page": 8,
+        "expected_doc": "attention.pdf",
         "got_pages": [
+          7,
           3,
+          7,
           8,
-          6,
-          4,
-          5
+          6
+        ],
+        "got": [
+          [
+            "bert.pdf",
+            7
+          ],
+          [
+            "attention.pdf",
+            3
+          ],
+          [
+            "bert.pdf",
+            7
+          ],
+          [
+            "attention.pdf",
+            8
+          ],
+          [
+            "attention.pdf",
+            6
+          ]
         ],
         "hit": true,
-        "embed_time_s": 0.004413500020746142,
-        "search_time_s": 2.3707980290055275e-05
-      },
-      {
-        "question": "How is positional information added to the input embeddings?",
-        "expected_page": 5,
-        "got_pages": [
-          2,
-          4,
-          2,
-          4,
-          5
-        ],
-        "hit": true,
-        "embed_time_s": 0.004215291992295533,
-        "search_time_s": 2.2209016606211662e-05
+        "embed_time_s": 0.008192624954972416,
+        "search_time_s": 5.029095336794853e-05
       },
       {
         "question": "How does multi-head attention work?",
         "expected_page": 4,
+        "expected_doc": "attention.pdf",
         "got_pages": [
           2,
           12,
@@ -111,27 +214,73 @@
           4,
           2
         ],
+        "got": [
+          [
+            "attention.pdf",
+            2
+          ],
+          [
+            "attention.pdf",
+            12
+          ],
+          [
+            "attention.pdf",
+            3
+          ],
+          [
+            "attention.pdf",
+            4
+          ],
+          [
+            "attention.pdf",
+            2
+          ]
+        ],
         "hit": true,
-        "embed_time_s": 0.0030613330309279263,
-        "search_time_s": 1.5208031982183456e-05
+        "embed_time_s": 0.0022949170088395476,
+        "search_time_s": 2.8084032237529755e-05
       },
       {
         "question": "What optimizer and learning rate schedule was used for training?",
         "expected_page": 6,
+        "expected_doc": "attention.pdf",
         "got_pages": [
+          11,
           6,
-          4,
-          6,
-          6,
-          10
+          7,
+          7,
+          7
+        ],
+        "got": [
+          [
+            "dropout.pdf",
+            11
+          ],
+          [
+            "attention.pdf",
+            6
+          ],
+          [
+            "dropout.pdf",
+            7
+          ],
+          [
+            "dropout.pdf",
+            7
+          ],
+          [
+            "dropout.pdf",
+            7
+          ]
         ],
         "hit": true,
-        "embed_time_s": 0.002850916003808379,
-        "search_time_s": 1.3917044270783663e-05
+        "embed_time_s": 0.0038895829929970205,
+        "search_time_s": 3.187498077750206e-05
       },
       {
         "question": "What BLEU score did the big Transformer model achieve on English to German translation?",
         "expected_page": 7,
+        "expected_doc": "attention.pdf",
         "got_pages": [
           7,
           7,
@@ -139,9 +288,216 @@
           8,
           9
         ],
+        "got": [
+          [
+            "attention.pdf",
+            7
+          ],
+          [
+            "attention.pdf",
+            7
+          ],
+          [
+            "attention.pdf",
+            7
+          ],
+          [
+            "attention.pdf",
+            8
+          ],
+          [
+            "attention.pdf",
+            9
+          ]
+        ],
         "hit": true,
-        "embed_time_s": 0.0029748749802820385,
-        "search_time_s": 1.4333054423332214e-05
+        "embed_time_s": 0.003440000000409782,
+        "search_time_s": 3.9832957554608583e-05
+      },
+      {
+        "question": "What are the two pre-training tasks used by BERT?",
+        "expected_page": 3,
+        "expected_doc": "bert.pdf",
+        "got_pages": [
+          13,
+          2,
+          11,
+          3,
+          2
+        ],
+        "got": [
+          [
+            "bert.pdf",
+            13
+          ],
+          [
+            "bert.pdf",
+            2
+          ],
+          [
+            "bert.pdf",
+            11
+          ],
+          [
+            "bert.pdf",
+            3
+          ],
+          [
+            "bert.pdf",
+            2
+          ]
+        ],
+        "hit": true,
+        "embed_time_s": 0.0035497500211931765,
+        "search_time_s": 3.4374999813735485e-05
+      },
+      {
+        "question": "What percentage of tokens are masked during BERT masked language model pretraining?",
+        "expected_page": 3,
+        "expected_doc": "bert.pdf",
+        "got_pages": [
+          15,
+          11,
+          3,
+          2,
+          3
+        ],
+        "got": [
+          [
+            "bert.pdf",
+            15
+          ],
+          [
+            "bert.pdf",
+            11
+          ],
+          [
+            "bert.pdf",
+            3
+          ],
+          [
+            "bert.pdf",
+            2
+          ],
+          [
+            "bert.pdf",
+            3
+          ]
+        ],
+        "hit": true,
+        "embed_time_s": 0.006892166973557323,
+        "search_time_s": 5.099998088553548e-05
+      },
+      {
+        "question": "What problem do residual connections address in very deep neural networks?",
+        "expected_page": 0,
+        "expected_doc": "resnet.pdf",
+        "got_pages": [
+          0,
+          0,
+          3,
+          7,
+          2
+        ],
+        "got": [
+          [
+            "resnet.pdf",
+            0
+          ],
+          [
+            "resnet.pdf",
+            0
+          ],
+          [
+            "resnet.pdf",
+            3
+          ],
+          [
+            "resnet.pdf",
+            7
+          ],
+          [
+            "resnet.pdf",
+            2
+          ]
+        ],
+        "hit": true,
+        "embed_time_s": 0.002960583020467311,
+        "search_time_s": 2.808397402986884e-05
+      },
+      {
+        "question": "What was the top-5 error comparison table showing ResNet against VGG and GoogLeNet?",
+        "expected_page": 5,
+        "expected_doc": "resnet.pdf",
+        "got_pages": [
+          5,
+          7,
+          4,
+          6,
+          3
+        ],
+        "got": [
+          [
+            "resnet.pdf",
+            5
+          ],
+          [
+            "resnet.pdf",
+            7
+          ],
+          [
+            "resnet.pdf",
+            4
+          ],
+          [
+            "resnet.pdf",
+            6
+          ],
+          [
+            "resnet.pdf",
+            3
+          ]
+        ],
+        "hit": true,
+        "embed_time_s": 0.002970790956169367,
+        "search_time_s": 2.6334018912166357e-05
+      },
+      {
+        "question": "What does dropout prevent among feature detectors?",
+        "expected_page": 0,
+        "expected_doc": "dropout.pdf",
+        "got_pages": [
+          0,
+          8,
+          0,
+          17,
+          3
+        ],
+        "got": [
+          [
+            "dropout.pdf",
+            0
+          ],
+          [
+            "dropout.pdf",
+            8
+          ],
+          [
+            "dropout.pdf",
+            0
+          ],
+          [
+            "dropout.pdf",
+            17
+          ],
+          [
+            "dropout.pdf",
+            3
+          ]
+        ],
+        "hit": true,
+        "embed_time_s": 0.029616791987791657,
+        "search_time_s": 5.9917045291513205e-05
       }
     ]
   },
@@ -150,33 +506,33 @@
     "results": [
       {
         "n_vectors": 10,
-        "mean_latency_ms": 0.0029022019589319825,
-        "p95_latency_ms": 0.007061063661240046
+        "mean_latency_ms": 0.0033269956475123763,
+        "p95_latency_ms": 0.008008052827790388
       },
       {
         "n_vectors": 100,
-        "mean_latency_ms": 0.008916744263842702,
-        "p95_latency_ms": 0.01020623312797399
+        "mean_latency_ms": 0.009058340219780803,
+        "p95_latency_ms": 0.013742278679274031
       },
       {
         "n_vectors": 1000,
-        "mean_latency_ms": 0.07105829427018762,
-        "p95_latency_ms": 0.07586874417029321
+        "mean_latency_ms": 0.0740603485610336,
+        "p95_latency_ms": 0.0871985306730494
       },
       {
         "n_vectors": 10000,
-        "mean_latency_ms": 1.9095352967269719,
-        "p95_latency_ms": 9.284694324014708
+        "mean_latency_ms": 1.742166595067829,
+        "p95_latency_ms": 2.956245851237329
       },
       {
         "n_vectors": 100000,
-        "mean_latency_ms": 14.225631291628815,
-        "p95_latency_ms": 22.088333318242807
+        "mean_latency_ms": 14.380060555413365,
+        "p95_latency_ms": 19.666023287572912
       },
       {
         "n_vectors": 500000,
-        "mean_latency_ms": 60.42028125375509,
-        "p95_latency_ms": 77.75876490632072
+        "mean_latency_ms": 55.74065635155421,
+        "p95_latency_ms": 60.70842706831172
       }
     ]
   }
